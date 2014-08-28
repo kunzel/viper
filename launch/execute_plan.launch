@@ -4,7 +4,7 @@
 
   <include file="$(find viper)/launch/$(arg robot)/execute_plan.launch"/>
 
-  <node name="execute_trajectory" pkg="viper" type="exec_traj.py" output="screen">
+  <node name="execute_plan" pkg="viper" type="exec_plan.py" output="screen">
     <param name="robot" type="string" value="$(arg robot)"/>
     <param name="input_file" type="string" value="$(arg input_file)"/>
   </node>

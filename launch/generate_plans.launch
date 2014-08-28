@@ -6,7 +6,7 @@
   <arg name="input_file" default="$(find viper)/data/$(arg robot)/views.json"/>
   <arg name="input_file_values" default="$(find viper)/data/$(arg robot)/view_values.json"/>
   <arg name="input_file_costs" default="$(find viper)/data/$(arg robot)/view_costs.json"/>
-  <arg name="output_file" default="$(find viper)/data/$(arg robot)/plans-num$(arg num_of_plans)-len$(arg plan_length)-rho$(arg rho)-.json"/>
+  <arg name="output_file" default="$(find viper)/data/$(arg robot)/plans-num$(arg num_of_plans)-len$(arg plan_length)-rho$(arg rho).json"/>
 
   <include file="$(find viper)/launch/$(arg robot)/_generate_plans.launch"/>
 
