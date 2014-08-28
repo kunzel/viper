@@ -217,7 +217,8 @@ import viper.robots.scitos
 robot = viper.robots.scitos.ScitosRobot()
 
 INPUT_FILE = rospy.get_param('~input_file',   'views.json')
-OUTPUT_FILE = rospy.get_param('~output_file', 'view_values.json')
+OUTPUT_FILE_COSTS = rospy.get_param('~output_file_costs', 'view_costs.json')
+OUTPUT_FILE_VALUES = rospy.get_param('~output_file_values', 'view_values.json')
 
 views = []
 with open(INPUT_FILE, "r") as input_file:
@@ -284,11 +285,14 @@ for view1, costs in view_costs.iteritems():
 vis.pubcost.publish(cost_marker)
 
        
-with open(OUTPUT_FILE, "w") as outfile:
-    json_data = jsonpickle.encode(view)
+with open(OUTPUT_FILE_VALUES, "w") as outfile:
+    json_data = jsonpickle.encode(view_values)
     outfile.write(json_data)
 
-    
+with open(OUTPUT_FILE_COSTS, "w") as outfile:
+    json_data = jsonpickle.encode(view_costs)
+    outfile.write(json_data)    
+
 rospy.loginfo("Finished view evaluation.")
 rospy.spin()
     

@@ -270,11 +270,6 @@ class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
         ps2 = PoseStamped()
         ps2.header.frame_id = 'map'
         ps2.pose = p2
-
-        # get_plan = GetPlan()
-        # get_plan.start.pose = ps1
-        # get_plan.goal.pose = ps2
-        # get_plan.tolerance = 0.1
         
         res = self.make_plan(ps1, ps2, 0.1)
 
@@ -306,18 +301,6 @@ class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
         
         return cost
         
-
-class LinearVTM(viper.core.robot.ViewTransitionModel):
-        
-    def cost(self, view1, view2):
-        """return euclidean distance"""
-        pass
-    
-class MotionPlanningVTM(viper.core.robot.ViewTransitionModel):
-
-    def cost(view1, view2):
-        """return path length of move_base planner"""
-        pass
 
 ##########################################################################
 import math
@@ -365,7 +348,6 @@ class ScitosViewAction(viper.core.robot.ViewAction):
             self.obj_list.append(obj)
 
     def execute(self):
-
         try:
             rospy.loginfo("Wait for /semcam")
             msg = rospy.wait_for_message("/semcam", String, timeout=10.0)
@@ -373,6 +355,3 @@ class ScitosViewAction(viper.core.robot.ViewAction):
             self.camera_cb(msg)
         except rospy.ROSException, e:
             rospy.logwarn("Failed to get /semcam")
-
-        
-            
