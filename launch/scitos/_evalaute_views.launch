@@ -1,0 +1,9 @@
+<launch>
+  
+  <!-- view evaluation --> 
+  <param name="frustum_near" type="double" value="0.8"/>
+  <param name="frustum_far" type="double" value="2.5"/>
+  <param name="frustum_angle" type="double" value="40.5"/> <!-- vertical FOV (focal length 32.5) -->
+  
+  <node name="evaluate_view" pkg="viper" type="eval_view" output="screen"/> 
+</launch>
