@@ -56,6 +56,10 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
 
     
     def __init__(self):
+        self.first_call = True
+
+    def setup(self):
+        
         self.inflation_radius = float(rospy.get_param('inflation_radius', '-0.5'))
 
         points = rospy.get_param('roi', '[]')
@@ -88,7 +92,7 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
             rospy.logerr("Service call failed: %s" % e)
         self.views = []
 
-    def generate_views(self):
+    def generate_views(self):        
         rospy.loginfo('Generate views')
         try:
             resp = self.nav_goals(1, self.inflation_radius, self.roi)
@@ -114,6 +118,10 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
         
         
     def generate(self):
+        if self.first_call:
+            self.setup()
+            self.first_call = False
+            
         if not self.views:
             self.generate_views()
             if not self.views:
@@ -132,10 +140,13 @@ import math
 class ScitosViewController(viper.core.robot.ViewController):
 
     def __init__(self):
+        self.first_call = True
+
+
+    def setup(self):
         self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         self.ptu_cmd = rospy.Publisher('/ptu/cmd', JointState)
         rospy.Subscriber("/ptu/state", JointState, self.ptu_cb)
-                    
 
     def ptu_cb(self,js):
         self.current_ptu_state = js
@@ -143,6 +154,9 @@ class ScitosViewController(viper.core.robot.ViewController):
 
     def execute(self, view):
         rospy.loginfo("Execute view")
+        if self.first_call:
+            self.setup()
+            self.first_call = False
 
         try:
             rospy.loginfo("Wait for /ptu/state")
@@ -237,12 +251,20 @@ from viper.srv import ViewValue
 class ScitosViewEvaluator(viper.core.robot.ViewEvaluator):
 
     def __init__(self):
+        self.first_call = True
+        
+    def setup(self):
         try:
             self.view_eval = rospy.ServiceProxy('view_eval', ViewValue)
         except rospy.ServiceException, e:
             rospy.logerr("Service call failed: %s" % e)
-
+    
     def evaluate(self, view):
+        if self.first_call:
+            self.setup()
+            self.first_call = False
+
+
         resp = self.view_eval(view.get_ptu_pose())
         view.set_frustum(resp.frustum)
         return resp.value #math.fabs(view.get_robot_pose().position.x + view.get_robot_pose().position.y)
@@ -273,7 +295,6 @@ class ScitosViewAction(viper.core.robot.ViewAction):
 
     def __init__(self):
         pass
-        #rospy.Subscriber("semcam", String, self.camera_cb)
 
     def camera_cb(self, data):
         obj_list = json.loads(data.data)

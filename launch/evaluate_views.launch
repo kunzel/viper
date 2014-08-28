@@ -1,9 +1,9 @@
 <launch>
   <arg name="robot" default="scitos"/>
-  <arg name="input_file" default="$(find viper)/data/views.json"/>
-  <arg name="output_file" default="$(find viper)/data/view_values.json"/>
+  <arg name="input_file" default="$(find viper)/data/$(arg robot)/views.json"/>
+  <arg name="output_file" default="$(find viper)/data/$(arg robot)/view_values.json"/>
 
-  <include file="$(find viper)/launch/$(arg robot).launch"/>
+  <include file="$(find viper)/launch/$(arg robot)/_evalaute_views.launch"/>
 
   <node name="evaluate_views" pkg="viper" type="eval_views.py" output="screen">
     <param name="robot" type="string" value="$(arg robot)"/>

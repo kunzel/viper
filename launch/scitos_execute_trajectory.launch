@@ -1,3 +1,0 @@
-<launch>
-  <include file="$(find strands_morse)/bham/launch/bham_cs_nav2d.launch"/>
-</launch>

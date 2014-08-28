@@ -1,9 +1,9 @@
 <launch>
   <arg name="robot" default="scitos"/>
   <arg name="num_of_views" default="80"/>
-  <arg name="output_file" default="$(find viper)/data/views.json"/>
+  <arg name="output_file" default="$(find viper)/data/$(arg robot)/views.json"/>
 
-  <include file="$(find viper)/launch/$(arg robot)_generate_views.launch"/>
+  <include file="$(find viper)/launch/$(arg robot)/_generate_views.launch"/>
 
   <node name="generate_views" pkg="viper" type="gen_views.py" output="screen">
     <param name="robot" type="string" value="$(arg robot)"/>

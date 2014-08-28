@@ -1,8 +1,8 @@
 <launch>
   <arg name="robot" default="scitos"/>
-  <arg name="input_file" default="$(find viper)/data/views.json"/>
+  <arg name="input_file" default="$(find viper)/data/$(arg robot)/views.json"/>
 
-  <include file="$(find viper)/launch/$(arg robot).launch"/>
+  <include file="$(find viper)/launch/$(arg robot)/execute_plan.launch"/>
 
   <node name="execute_trajectory" pkg="viper" type="exec_traj.py" output="screen">
     <param name="robot" type="string" value="$(arg robot)"/>
