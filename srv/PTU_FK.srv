@@ -1,0 +1,5 @@
+float32 pan
+float32 tilt
+geometry_msgs/Pose pose
+---
+geometry_msgs/Pose pose

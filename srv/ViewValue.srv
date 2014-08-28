@@ -1,0 +1,4 @@
+geometry_msgs/Pose pose
+---
+int32 value
+geometry_msgs/Point[] frustum
