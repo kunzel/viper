@@ -6,14 +6,62 @@ from viper.core.planner import ViewPlanner
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 from geometry_msgs.msg import Point
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import Pose
+
 
 class Vis(object):
 
     def __init__(self):
         self.pubmarker = rospy.Publisher('evaluated_views', MarkerArray)
         self.pubfrustum = rospy.Publisher('frustums', MarkerArray)
+        self.pubcost =  rospy.Publisher('costs', MarkerArray)
         self.marker_id = 0
 
+    def create_cost_marker(self, markerArray, view1, view2, view_costs):
+
+        marker1 = Marker()
+        marker1.id = self.marker_id
+        self.marker_id += 1
+        marker1.header.frame_id = "/map"
+        marker1.type = marker1.LINE_LIST
+        marker1.action = marker1.ADD
+        marker1.scale.x = 0.05
+        marker1.color.a = 0.3
+
+        costs = []
+        row_costs = view_costs.values()
+        for row in row_costs:
+            costs.append(row.values())
+        flatted_costs =  [val for sublist in costs for val in sublist]
+        
+        max_val = max(flatted_costs)
+        non_zero_vals = filter(lambda a: a != 0, flatted_costs)
+        min_val = min(non_zero_vals)
+        
+        marker1.color.r = r_func( float((view_costs[view1][view2] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.g = g_func( float((view_costs[view1][view2] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.b = b_func( float((view_costs[view1][view2] - min_val)) /  float((max_val - min_val + 1)))
+
+        pose = Pose() #view1.get_robot_pose()
+        marker1.pose.orientation = pose.orientation
+        marker1.pose.position = pose.position
+
+        point1 = Point()
+        point1.x =  view1.get_robot_pose().position.x 
+        point1.y =  view1.get_robot_pose().position.y 
+        point2 = Point()
+        point2.x =  view2.get_robot_pose().position.x
+        point2.y =  view2.get_robot_pose().position.y
+
+        marker1.points = []
+        marker1.points.append(point1)
+        marker1.points.append(point2)
+        
+        markerArray.markers.append(marker1)
+
+
+        
     def create_frustum_marker(self, markerArray, view, pose, view_values):
         marker1 = Marker()
         marker1.id = self.marker_id
@@ -161,8 +209,9 @@ def b_func(x):
 
 
 vis = Vis()
-rospy.init_node('view_evaluation')
+robot_poses_pub = rospy.Publisher('robot_poses', PoseArray)
 
+rospy.init_node('view_evaluation')
 
 import viper.robots.scitos
 robot = viper.robots.scitos.ScitosRobot()
@@ -177,9 +226,24 @@ with open(INPUT_FILE, "r") as input_file:
     rospy.loginfo("Loaded %s views"  % len(views))
 
 
+
 planner = ViewPlanner(robot)
 
 view_values = planner.compute_view_values(views)
+
+
+robot_poses  = PoseArray()
+robot_poses.header.frame_id = '/map'
+robot_poses.poses = []
+for v in views:
+    robot_poses.poses.append(v.get_robot_pose())
+robot_poses_pub.publish(robot_poses)
+
+
+
+view_costs = planner.compute_view_costs(views)
+
+
 
 # triangle marker
 markerArray = MarkerArray()    
@@ -203,6 +267,21 @@ for view, val in view_values.iteritems():
         vis.create_frustum_marker(frustum_marker, view, view.get_ptu_pose(), view_values)
     idx += 1
 vis.pubfrustum.publish(frustum_marker)
+
+# cost marker
+cost_marker = MarkerArray()    
+i = 0
+for view1, costs in view_costs.iteritems():
+    j = 0
+    for view2, cost in costs.iteritems():
+        if j <= i:
+            print i, j, cost
+            j += 1
+            if cost > 1.0:
+                print "Create marker with value", cost
+                vis.create_cost_marker(cost_marker, view1, view2, view_costs)
+    i += 1
+vis.pubcost.publish(cost_marker)
 
        
 with open(OUTPUT_FILE, "w") as outfile:

@@ -3,7 +3,8 @@
   <include file="$(find scitos_moveit_config)/launch/move_group.launch"/>
   <node name="ptu_fk" pkg="viper" type="ptu_fk"/>
 
-  <rosparam param="roi">[[2.0,-8.0],[5.0,-8.0],[5.0,2.0],[2.0,2.0]]</rosparam>   
+  <rosparam param="roi">[]</rosparam>   
+  <!-- <rosparam param="roi">[[2.0,-8.0],[5.0,-8.0],[5.0,2.0],[2.0,2.0]]</rosparam>   -->
   <param name="inflation_radius" type="double" value="0.5" />  
   <param name="views_at_pose" type="int" value="8" />  
 

@@ -26,9 +26,13 @@ class ViewPlanner(object):
         for v1 in views:
             vcosts = dict()
             for v2 in views:
+                # symmetric costs (faster))
+                #if v2 in view_costs:
+                #    vcosts[v2] = view_costs[v2][v1]
+                #else:
                 cost = self._robot.cost(v1,v2)
-                vcost[v2] = cost
-            view_costs[v1] = vcost
+                vcosts[v2] = cost
+            view_costs[v1] = vcosts
         return view_costs
 
     def _generate_cost_pmf(self, view_costs):

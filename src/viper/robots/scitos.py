@@ -224,12 +224,88 @@ class ScitosViewController(viper.core.robot.ViewController):
 
 
 ##########################################################################
-    
+import math
+from nav_msgs.srv import GetPlan
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped
+
 class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
 
-    def cost(view1, view2):
-        """return path length of move_base planner"""
-        pass
+    def __init__(self):
+        self.first_call = True
+        self.nav_lin_vel = 0.95
+        self.nav_ang_vel = 1.0
+        self.ptu_ang_vel = 1.0
+
+    def setup(self):
+        try:
+            self.make_plan = rospy.ServiceProxy('move_base/make_plan', GetPlan)
+        except rospy.ServiceException, e:
+            rospy.logerr("Service call failed: %s" % e)
+
+        
+    def cost(self, view1, view2):
+
+        if self.first_call:
+            self.setup()
+            self.first_call = False
+
+        p1 = view1.get_robot_pose()
+        p2 = view2.get_robot_pose()
+        nav_cost = self.nav_cost(p1,p2)
+        
+        s1 = view1.get_ptu_state()
+        s2 = view2.get_ptu_state()
+        ptu_cost = self.ptu_cost(s1,s2)
+
+        cost = max(nav_cost, ptu_cost)
+
+        return cost
+
+    def nav_cost(self, p1, p2):
+        ps1 = PoseStamped()
+        ps1.header.frame_id = 'map'
+        ps1.pose = p1
+
+        ps2 = PoseStamped()
+        ps2.header.frame_id = 'map'
+        ps2.pose = p2
+
+        # get_plan = GetPlan()
+        # get_plan.start.pose = ps1
+        # get_plan.goal.pose = ps2
+        # get_plan.tolerance = 0.1
+        
+        res = self.make_plan(ps1, ps2, 0.1)
+
+        cost = 0.0
+        for i in range(1,len(res.plan.poses)):
+            p1 = res.plan.poses[i-1].pose
+            p2 = res.plan.poses[i].pose
+            # lin diff 
+            lin_diff = math.sqrt( math.pow(p1.position.x - p2.position.x, 2) +
+                                  math.pow(p1.position.y - p2.position.y, 2))
+            lin_cost = lin_diff / self.nav_lin_vel
+
+            # comput yaw angles and calc difference
+            ang_diff = 0
+            ang_cost = ang_diff / self.nav_ang_vel
+            
+            cost += max(lin_cost, ang_cost)
+
+        return cost 
+        
+    def ptu_cost(self, s1, s2):
+        pan_diff = 0
+        pan_cost = pan_diff / self.ptu_ang_vel
+        
+        tilt_diff = 0
+        tilt_cost = tilt_diff / self.ptu_ang_vel
+        
+        cost = max(pan_cost, tilt_cost)
+        
+        return cost
+        
 
 class LinearVTM(viper.core.robot.ViewTransitionModel):
         
@@ -269,24 +345,6 @@ class ScitosViewEvaluator(viper.core.robot.ViewEvaluator):
         view.set_frustum(resp.frustum)
         return resp.value #math.fabs(view.get_robot_pose().position.x + view.get_robot_pose().position.y)
 
-class TriangleViewEvaluator(viper.core.robot.ViewEvaluator):
-    
-    def __init__(self, triangle_conf, map2d):
-        self._triangle_conf = triangle_conf
-        self._map2d = map2d
-
-    def evaluate(self, view):
-        pass
-
-class FrustumViewEvaluator(viper.core.robot.ViewEvaluator):
-
-    def __init__(self, frustum_conf, map2d, map3d):
-        self._frustum_conf = frustum_conf
-        self._map2d = map2d
-        self._map3d = map3d
-    
-    def evaluate(self, view):
-        pass    
 ##########################################################################
 from std_msgs.msg import String
 import json
