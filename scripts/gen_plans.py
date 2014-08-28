@@ -10,6 +10,9 @@ import viper.robots.scitos
 robot = viper.robots.scitos.ScitosRobot()
 
 NUM_OF_PLANS = rospy.get_param('~num_of_plans', 100)
+PLAN_LENGTH = rospy.get_param('~plan_length', 20)
+RHO  = rospy.get_param('~rho', 1.0)
+
 
 INPUT_FILE = rospy.get_param('~input_file', 'views.json')
 INPUT_FILE_VALUES = rospy.get_param('~input_file_values', 'view_values.json')
@@ -37,7 +40,7 @@ with open(INPUT_FILE_COSTS, "r") as input_file:
 planner = ViewPlanner(robot)
 
 rospy.loginfo("Started plan sampling.")
-plans = planner.sample_plans(NUM_OF_PLANS, views, view_values, view_costs)
+plans = planner.sample_plans(NUM_OF_PLANS, PLAN_LENGTH, RHO, views, view_values, view_costs)
 rospy.loginfo("Stopped plan sampling.")
 
 with open(OUTPUT_FILE, "w") as outfile:

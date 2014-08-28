@@ -41,14 +41,14 @@ class ViewPlanner(object):
     def _generate_value_pmf(self, view_values):
         pass
 
-    def sample_plans(self, num_of_plans, views, view_values, view_costs):
+    def sample_plans(self, num_of_plans, plan_length, rho, views, view_values, view_costs):
         plans = []
         for i in range(0, num_of_plans):
-            plan = self.sample_plan(views, view_values, view_costs)
+            plan = self.sample_plan(plan_length, rho, views, view_values, view_costs)
             plans.append(plan)
         return plans
 
-    def sample_plan(self, views, view_values, view_costs):
+    def sample_plan(self, plan_length, rho, views, view_values, view_costs):
 
         # recursice method
 
