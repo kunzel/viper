@@ -26,7 +26,7 @@ class Vis(object):
         marker1.header.frame_id = "/map"
         marker1.type = marker1.LINE_LIST
         marker1.action = marker1.ADD
-        marker1.scale.x = 0.05
+        marker1.scale.x = 0.001
         marker1.color.a = 0.3
 
         costs = []
@@ -39,20 +39,22 @@ class Vis(object):
         non_zero_vals = filter(lambda a: a != 0, flatted_costs)
         min_val = min(non_zero_vals)
         
-        marker1.color.r = r_func( float((view_costs[view1][view2] - min_val)) / float((max_val - min_val + 1)))
-        marker1.color.g = g_func( float((view_costs[view1][view2] - min_val)) / float((max_val - min_val + 1)))
-        marker1.color.b = b_func( float((view_costs[view1][view2] - min_val)) /  float((max_val - min_val + 1)))
+        marker1.color.r = r_func( float((view_costs[view1.ID][view2.ID] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.g = g_func( float((view_costs[view1.ID][view2.ID] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.b = b_func( float((view_costs[view1.ID][view2.ID] - min_val)) /  float((max_val - min_val + 1)))
 
         pose = Pose() #view1.get_robot_pose()
         marker1.pose.orientation = pose.orientation
         marker1.pose.position = pose.position
 
         point1 = Point()
-        point1.x =  view1.get_robot_pose().position.x 
-        point1.y =  view1.get_robot_pose().position.y 
+        point1.x =  view1.get_ptu_pose().position.x 
+        point1.y =  view1.get_ptu_pose().position.y
+        point1.z =  view1.get_ptu_pose().position.z 
         point2 = Point()
-        point2.x =  view2.get_robot_pose().position.x
-        point2.y =  view2.get_robot_pose().position.y
+        point2.x =  view2.get_ptu_pose().position.x
+        point2.y =  view2.get_ptu_pose().position.y
+        point2.z =  view2.get_ptu_pose().position.z
 
         marker1.points = []
         marker1.points.append(point1)
@@ -77,11 +79,11 @@ class Vis(object):
         non_zero_vals = filter(lambda a: a != 0, vals)
         min_val = min(non_zero_vals)
         
-        print min_val, max_val, view_values[view]
+        print min_val, max_val, view_values[view.ID]
         
-        marker1.color.r = r_func( float((view_values[view] - min_val)) / float((max_val - min_val + 1)))
-        marker1.color.g = g_func( float((view_values[view] - min_val)) / float((max_val - min_val + 1)))
-        marker1.color.b = b_func( float((view_values[view] - min_val)) /  float((max_val - min_val + 1)))
+        marker1.color.r = r_func( float((view_values[view.ID] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.g = g_func( float((view_values[view.ID] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.b = b_func( float((view_values[view.ID] - min_val)) /  float((max_val - min_val + 1)))
 
         marker1.pose.orientation = pose.orientation
         marker1.pose.position = pose.position
@@ -144,11 +146,11 @@ class Vis(object):
         non_zero_vals = filter(lambda a: a != 0, vals)
         min_val = min(non_zero_vals)
         
-        print min_val, max_val, view_values[view]
+        print min_val, max_val, view_values[view.ID]
         
-        marker1.color.r = r_func( float((view_values[view] - min_val)) / float((max_val - min_val + 1)))
-        marker1.color.g = g_func( float((view_values[view] - min_val)) / float((max_val - min_val + 1)))
-        marker1.color.b = b_func( float((view_values[view] - min_val)) /  float((max_val - min_val + 1)))
+        marker1.color.r = r_func( float((view_values[view.ID] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.g = g_func( float((view_values[view.ID] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.b = b_func( float((view_values[view.ID] - min_val)) /  float((max_val - min_val + 1)))
 
         marker1.pose.orientation = pose.orientation
         marker1.pose.position = pose.position
@@ -240,19 +242,16 @@ for v in views:
     robot_poses.poses.append(v.get_robot_pose())
 robot_poses_pub.publish(robot_poses)
 
-
-
 view_costs = planner.compute_view_costs(views)
-
-
 
 # triangle marker
 markerArray = MarkerArray()    
 idx = 0
-for view, val in view_values.iteritems():
+for view in views:
+    val = view_values[view.ID]
     print idx, val
     if val > 0:
-        print "Create marker with value", val
+        print "Create triangle marker with value", val
         vis.create_marker(markerArray, view, view.get_ptu_pose(), view_values)
     idx += 1
 vis.marker_len = len(markerArray.markers)
@@ -261,10 +260,11 @@ vis.pubmarker.publish(markerArray)
 # frustum marker
 frustum_marker = MarkerArray()    
 idx = 0
-for view, val in view_values.iteritems():
+for view in views:
+    val = view_values[view.ID]
     print idx, val
     if val > 0:
-        print "Create marker with value", val
+        print "Create frustum marker with value", val
         vis.create_frustum_marker(frustum_marker, view, view.get_ptu_pose(), view_values)
     idx += 1
 vis.pubfrustum.publish(frustum_marker)
@@ -272,14 +272,15 @@ vis.pubfrustum.publish(frustum_marker)
 # cost marker
 cost_marker = MarkerArray()    
 i = 0
-for view1, costs in view_costs.iteritems():
+for view1 in views:
     j = 0
-    for view2, cost in costs.iteritems():
+    for view2 in views:
         if j <= i:
+            cost = view_costs[view1.ID][view2.ID]
             print i, j, cost
             j += 1
-            if cost > 1.0:
-                print "Create marker with value", cost
+            if cost > 0.0:
+                print "Create cost marker with value", cost
                 vis.create_cost_marker(cost_marker, view1, view2, view_costs)
     i += 1
 vis.pubcost.publish(cost_marker)
