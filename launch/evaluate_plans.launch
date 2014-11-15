@@ -1,0 +1,17 @@
+<launch>
+  <arg name="robot" default="scitos"/>
+  <arg name="input_file" default="$(find viper)/data/$(arg robot)/plans.json"/>
+  <arg name="input_file_values" default="$(find viper)/data/$(arg robot)/view_values.json"/>
+  <arg name="input_file_costs" default="$(find viper)/data/$(arg robot)/view_costs.json"/>
+  <arg name="output_file" default="$(find viper)/data/$(arg robot)/plan_values.json"/>
+
+  <include file="$(find viper)/launch/$(arg robot)/_evaluate_plans.launch"/>
+
+  <node name="evaluate_plans" pkg="viper" type="eval_plans.py" output="screen">
+    <param name="robot" type="string" value="$(arg robot)"/>
+    <param name="input_file" type="string" value="$(arg input_file)"/>
+    <param name="input_file_values" type="string" value="$(arg input_file_values)"/>
+    <param name="input_file_costs"  type="string" value="$(arg input_file_costs)"/>
+    <param name="output_file" type="string" value="$(arg output_file)"/>
+  </node>
+</launch>
