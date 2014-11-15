@@ -1,3 +1,5 @@
+#include <cstdlib>  
+
 #include <stdlib.h>  
 #include <string>
 #include <math.h>
@@ -110,11 +112,12 @@ OcTree* retrieve_octree()
 OcTree* input_tree;
 
 
-int compute_value(Frustum frustum)
+int compute_value(Frustum frustum, std::vector<unsigned short int> keys, std::vector<int> node_values)
 {  
   int value = 0;
   int free = 0;
   int occupied = 0;
+  int WEIGHT = 1; // compute weight from QSR model
 
   for(OcTree::leaf_iterator it = input_tree->begin_leafs(),
         end=input_tree->end_leafs(); it!= end; ++it)
@@ -126,12 +129,19 @@ int compute_value(Frustum frustum)
           double x = it.getX();
           double y = it.getY();
           double z = it.getZ();
+          const OcTreeKey key = it.getKey();
+          OcTreeKey::KeyHash computeHash;
+          unsigned short int hash = computeHash(key);
+          keys.push_back(hash);
+          //std::cerr<< "xyz:" << x << "," << y << "," << z << " hash:" << hash << std::endl;
           occupied++;
           Vec3 point(x, y, z);
           if (frustum.is_inside(point))
             {
               //ROS_INFO("Node inside frustum");
-              value += 1 * size;
+              int node_value = WEIGHT * size;
+              node_values.push_back(node_value);
+              value += node_value;
             }
         }
       else 
@@ -163,11 +173,8 @@ Frustum generate_frustum(geometry_msgs::Pose pose)
   Vec3 points[8];
   Frustum frustum, frustum_temp;
 
-  Vec3 p(0.0, 0.0, 0.0);//camera_height); // Camera position.
-  Vec3 l(1.0, 0.0, 0.0);//camera_height); // Look at vector.
-  Vec3 u(0.0, 0.0, 1.0); // Right vector.
-  frustum_temp.setCamInternals(frustum_angle, frustum_ratio, frustum_near, frustum_far);
-  frustum_temp.setCamDef(p, l, u);
+  frustum_temp = generate_local_frustum();
+
   points[0].x = frustum_temp.ntl.x;
   points[0].y = frustum_temp.ntl.y;
   points[0].z = frustum_temp.ntl.z;
@@ -280,7 +287,7 @@ bool view_eval(viper::ViewValue::Request  &req,
 	// Generate frustum.
   Frustum f = generate_frustum(camera_pose);
 	
-  int value = compute_value(f);
+  int value = compute_value(f, res.keys, res.values);
   
   res.value = value;
   res.frustum = get_points(generate_local_frustum());
