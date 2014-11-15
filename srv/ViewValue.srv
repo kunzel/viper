@@ -1,4 +1,6 @@
 geometry_msgs/Pose pose
 ---
 int32 value
+uint16[] keys 
+int32[] values 
 geometry_msgs/Point[] frustum
