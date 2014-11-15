@@ -3,12 +3,14 @@
   <include file="$(find scitos_moveit_config)/launch/move_group.launch"/>
   <node name="ptu_fk" pkg="viper" type="ptu_fk"/>
 
-  <rosparam param="roi">[]</rosparam>   
-  <!-- <rosparam param="roi">[[2.0,-8.0],[5.0,-8.0],[5.0,2.0],[2.0,2.0]]</rosparam>   -->
+  <!--<rosparam param="roi">[]</rosparam>-->   
+  <!--<rosparam param="roi">[[2.0,-8.0],[5.0,-8.0],[5.0,2.0],[2.0,2.0]]</rosparam>--> <!--cs_lg_obj_search_octomap.bt-->
+  <rosparam param="roi">[[-0.4,-8.5],[-0.4,1.0],[4.5,1.0],[4.5,-8.5]]</rosparam> <!--icaps-->
   <param name="inflation_radius" type="double" value="0.5" />  
   <param name="views_at_pose" type="int" value="8" />  
 
-  <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/bham/maps/cs_lg_obj_search_octomap.bt"/>
+  <!-- <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/bham/maps/cs_lg_obj_search_octomap.bt"/> -->
+  <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/bham/maps/icaps.bt"/>
 
   <arg name="map" default="/projected_map"/>  
   <include file="$(find nav_goals_generator)/launch/nav_goals_generator.launch">
