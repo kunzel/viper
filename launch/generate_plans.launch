@@ -1,7 +1,7 @@
 <launch>
   <arg name="robot" default="scitos"/>
   <arg name="num_of_plans" default="1000"/>
-  <arg name="plan_length" default="20"/>
+  <arg name="plan_length" default="25"/>
   <arg name="rho" default="1.0"/>
   <arg name="input_file" default="$(find viper)/data/$(arg robot)/views.json"/>
   <arg name="input_file_values" default="$(find viper)/data/$(arg robot)/view_values.json"/>
