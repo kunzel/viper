@@ -269,21 +269,21 @@ for view in views:
     idx += 1
 vis.pubfrustum.publish(frustum_marker)
 
-# cost marker
-cost_marker = MarkerArray()    
-i = 0
-for view1 in views:
-    j = 0
-    for view2 in views:
-        if j <= i:
-            cost = view_costs[view1.ID][view2.ID]
-            print i, j, cost
-            j += 1
-            if cost > 0.0:
-                print "Create cost marker with value", cost
-                vis.create_cost_marker(cost_marker, view1, view2, view_costs)
-    i += 1
-vis.pubcost.publish(cost_marker)
+# # cost marker
+# cost_marker = MarkerArray()    
+# i = 0
+# for view1 in views:
+#     j = 0
+#     for view2 in views:
+#         if j <= i:
+#             cost = view_costs[view1.ID][view2.ID]
+#             print i, j, cost
+#             j += 1
+#             if cost > 0.0:
+#                 print "Create cost marker with value", cost
+#                 vis.create_cost_marker(cost_marker, view1, view2, view_costs)
+#     i += 1
+# vis.pubcost.publish(cost_marker)
 
        
 with open(OUTPUT_FILE_VALUES, "w") as outfile:

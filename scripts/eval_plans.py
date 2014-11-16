@@ -170,6 +170,6 @@ with open(OUTPUT_FILE, "w") as outfile:
     outfile.write(json_data)
     rospy.loginfo("Saved %s plan_values" % len(plan_values.keys()))
 
-rospy.spin()
-rospy.loginfo("Stopped plan evaluation.")
 
+rospy.loginfo("Stopped plan evaluation.")
+rospy.spin()

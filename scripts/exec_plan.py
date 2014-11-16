@@ -8,8 +8,11 @@ rospy.init_node('exec_plan')
 import viper.robots.scitos
 robot = viper.robots.scitos.ScitosRobot()
 
-INPUT_FILE_PLANS = rospy.get_param('~input_file_plans', 'plans.json')
+INPUT_FILE_PLANS_DIR = rospy.get_param('~input_file_plans_dir', '.')
+INPUT_FILE_PLANS_NAME = rospy.get_param('~input_file_plans_name', 'plans.json')
+INPUT_FILE_PLANS = INPUT_FILE_PLANS_DIR + '/' + INPUT_FILE_PLANS_NAME 
 INPUT_FILE_PLAN_VALUES = rospy.get_param('~input_file_plan_values', 'plan_values.json')
+OUTPUT_FILE = INPUT_FILE_PLANS_DIR + '/' + INPUT_FILE_PLANS_NAME.split('.json')[0] + '-out.json' 
 
 plans = []
 with open(INPUT_FILE_PLANS, "r") as input_file_plans:
@@ -40,18 +43,17 @@ else:
 
 plan_exec = PlanExecutive(robot)
 found_objs = []
-found_objs = plan_exec.execute(p.views) #  plans[best_plan_idx].views)
+run_stats = plan_exec.execute(p.views) #  plans[best_plan_idx].views)
 
 print "Found objects:"
-for o in found_objs:
+for o in run_stats['found_objs']:
     print o[1].get('name'), "(", o[0], ")"
 
-# Stats: number of different object
-# 'time when obj was found'-graph
+with open(OUTPUT_FILE, "w") as outfile:
+    json_data = jsonpickle.encode(run_stats)
+    outfile.write(json_data)
+    rospy.loginfo("Saved %s run stats")
     
-    
-    
-
 rospy.loginfo("Finished plan execution.")
 rospy.spin()
 
