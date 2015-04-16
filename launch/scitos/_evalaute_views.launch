@@ -6,6 +6,6 @@
   <param name="frustum_angle" type="double" value="40.5"/> <!-- vertical FOV (focal length 32.5) -->
 
   <!--<node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/bham/maps/icaps.bt"/> 
- 
-  <node name="evaluate_view" pkg="viper" type="eval_view" output="screen"/>-->
+  --> 
+  <node name="evaluate_view" pkg="viper" type="eval_view" output="screen"/>
 </launch>

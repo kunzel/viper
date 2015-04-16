@@ -4,6 +4,7 @@ import jsonpickle
 from viper.core.planner import ViewPlanner
 from visualization_msgs.msg import Marker, InteractiveMarkerControl
 from interactive_markers.interactive_marker_server import *
+from visualization_msgs.msg import MarkerArray
 from geometry_msgs.msg import Pose, Point
 from std_msgs.msg import ColorRGBA
 import random
@@ -47,7 +48,10 @@ def b_func(x):
 class Vis(object):
     def __init__(self):
         self._server = InteractiveMarkerServer("evaluated_plans")
+        self.pubfrustum = rospy.Publisher('frustums', MarkerArray)
+        self.marker_id = 0
 
+        
     def _update_cb(self,feedback):
         return
 
@@ -60,6 +64,71 @@ class Vis(object):
     def delete(self, plan):
         self._server.erase(plan.ID)
         self._server.applyChanges()
+
+    def create_frustum_marker(self, markerArray, view, pose, view_values):
+        marker1 = Marker()
+        marker1.id = self.marker_id
+        self.marker_id += 1
+        marker1.header.frame_id = "/map"
+        marker1.type = marker1.LINE_LIST
+        marker1.action = marker1.ADD
+        marker1.scale.x = 0.05
+        marker1.color.a = 0.3
+
+        vals = view_values.values()
+        max_val = max(vals)
+        non_zero_vals = filter(lambda a: a != 0, vals)
+        min_val = min(non_zero_vals)
+        
+        print min_val, max_val, view_values[view.ID]
+        
+        marker1.color.r = r_func( float((view_values[view.ID] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.g = g_func( float((view_values[view.ID] - min_val)) / float((max_val - min_val + 1)))
+        marker1.color.b = b_func( float((view_values[view.ID] - min_val)) /  float((max_val - min_val + 1)))
+
+        marker1.pose.orientation = pose.orientation
+        marker1.pose.position = pose.position
+
+        points = view.get_frustum()
+
+        marker1.points.append(points[0])
+        marker1.points.append(points[1])
+
+        marker1.points.append(points[2])
+        marker1.points.append(points[3])
+        
+        marker1.points.append(points[0])
+        marker1.points.append(points[2])
+
+        marker1.points.append(points[1])
+        marker1.points.append(points[3])
+
+        marker1.points.append(points[4])
+        marker1.points.append(points[5])
+        
+        marker1.points.append(points[6])
+        marker1.points.append(points[7])
+
+        marker1.points.append(points[4])
+        marker1.points.append(points[6])
+        
+        marker1.points.append(points[5])
+        marker1.points.append(points[7])
+
+        marker1.points.append(points[0])
+        marker1.points.append(points[4])
+
+        marker1.points.append(points[2])
+        marker1.points.append(points[6])
+
+        marker1.points.append(points[1])
+        marker1.points.append(points[5])
+
+        marker1.points.append(points[3])
+        marker1.points.append(points[7])
+        
+        markerArray.markers.append(marker1)
+
         
     def create_plan_marker(self, plan, plan_values):
         # create an interactive marker for our server
@@ -74,7 +143,7 @@ class Vis(object):
         
         line_marker = Marker()
         line_marker.type = Marker.LINE_STRIP
-        line_marker.scale.x = 0.03
+        line_marker.scale.x = 0.1
 
         # random.seed(float(plan.ID))
         # val = random.random()
@@ -121,10 +190,20 @@ rospy.loginfo("Started plan evaluation.")
 import viper.robots.scitos
 robot = viper.robots.scitos.ScitosRobot()
 
+INPUT_VIEWS = rospy.get_param('~input_views', 'views.json')
+
 INPUT_FILE = rospy.get_param('~input_file', 'plans.json')
 INPUT_FILE_VALUES = rospy.get_param('~input_file_values', 'view_values.json')
 INPUT_FILE_COSTS = rospy.get_param('~input_file_costs', 'view_costs.json')
 OUTPUT_FILE = rospy.get_param('~output_file', 'plan_values.json')
+
+
+views = []
+with open(INPUT_VIEWS, "r") as input_file:
+    json_data = input_file.read()
+    views = jsonpickle.decode(json_data)
+    rospy.loginfo("Loaded %s views"  % len(views))
+
 
 plans = []
 with open(INPUT_FILE, "r") as input_file:
@@ -158,8 +237,25 @@ for p in plans:
 
 for p in plans:
     if p.ID == min_cost_plan_id:
+        pids = []
+        for v in p.views:
+            pids.append(v.ID)
         print "Best plan: ID: ", p.ID, " Value: ", plan_values[p.ID]
         vis.visualize_plan(p, plan_values)
+        # frustum marker
+        # call compute_values to calc the frustum
+        view_values = planner.compute_view_values(views)
+        frustum_marker = MarkerArray()    
+        idx = 0
+        for view in views:
+            if view.ID in pids:
+                val = view_values[view.ID]
+                print idx, val
+                if val > 0:
+                    print "Create frustum marker with value", val
+                    vis.create_frustum_marker(frustum_marker, view, view.get_ptu_pose(), view_values)
+                idx += 1
+        vis.pubfrustum.publish(frustum_marker)
         raw_input()
         vis.delete(p)
         break

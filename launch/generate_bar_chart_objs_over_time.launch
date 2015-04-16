@@ -2,7 +2,7 @@
   <arg name="robot" default="scitos"/>
   <arg name="input_file_dir" default="$(find viper)/data/$(arg robot)/scenarioB"/>
 
-  <node name="generate_cost_graph" pkg="viper" type="gen_cost_graph.py" output="screen">
+  <node name="generate_bar_chart" pkg="viper" type="gen_bar_chart_objs_over_time.py" output="screen">
     <param name="input_file_dir" type="string" value="$(arg input_file_dir)"/>
   </node>
 </launch>

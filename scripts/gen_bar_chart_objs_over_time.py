@@ -7,23 +7,14 @@ import matplotlib.pyplot as plt
 import jsonpickle
 import rospy
 import random
-
 import matplotlib
-
-font = {'family' : 'normal',
-#        'weight' : 'bold',
-         'size'   : 32}
-
-matplotlib.rc('font', **font)
-
-
 
 rospy.init_node('gen_bar_chart')
 
 INPUT_FILE_DIR = rospy.get_param('~input_file_dir', '.')
 
-scns = ['A','B']
-#scns = ['A']
+#scns = ['A','B']
+scns = ['B']
 rhos = ['0.0', '0.5', '1.0', '2.0']
 runs = range(10)
 
@@ -37,7 +28,15 @@ for scn in scns:
                 run_stats[(scn,rho,str(run))] = jsonpickle.decode(json_data)
 rospy.loginfo("Loaded %s stats")
 
-n_groups = len(scns)
+font = {'family' : 'normal',
+#        'weight' : 'bold',
+        'size'   : 32}
+
+matplotlib.rc('font', **font)
+
+times = range(10, 91, 10)
+#times = range(0, 221, 20) # [30, 60, 90, 120, 150, 180, 210, 240] 
+n_groups = len(times) #len(scns)
 
 means = dict()
 stds  = dict()
@@ -45,18 +44,29 @@ for rho in rhos:
     means[rho] = []
     stds[rho]  =  []
     for scn in scns:
-        nums = []
-        for run in runs:
-            stats = run_stats[(scn,rho,str(run))]
-            min_time = 500
-            if stats['found_objs']:
+        for t in times:
+            objs = {}  
+            nums = []
+            for run in runs:
+                t_objs = []
+                if run not in objs:
+                    objs[run] = []
+                stats = run_stats[(scn,rho,str(run))]
                 for o in stats['found_objs']:
-                    if o[0].to_sec() <= min_time:
-                        min_time = o[0].to_sec() 
-
-                nums.append(min_time)
-        means[rho].append(np.mean(nums))
-        stds[rho].append(np.std(nums))
+                    if o[1]['name'] not in objs[run] and o[0].to_sec() <= t:
+                        t_objs.append(o[1]['name'])
+                        objs[run].append(o[1]['name'])
+                nums.append(len(t_objs))
+            # if len(means[rho]) == 0:
+            #     last_mean = 0.0
+            # else:
+            #     last_mean = means[rho][len(means[rho])-1]
+            # if len(stds[rho]) == 0:
+            #     last_std = 0.0
+            # else:
+            #     last_std = stds[rho][len(stds[rho])-1]
+            means[rho].append((np.mean(nums)))
+            stds[rho].append((np.std(nums)))
 
 means_rho00 = tuple(means['0.0'])
 std_rho00 = tuple(stds['0.0'])
@@ -115,11 +125,11 @@ rects3 = plt.bar(index + 3* bar_width, means_rho20, bar_width,
                  error_kw=error_config,
                  label=r'$\varrho$ = 2.0')
 
-ax.set_ylim((0,80))
-plt.xlabel('Scenario')
-plt.ylabel('Average time (sec) when the first object was found')
-#plt.title('Average number of found objects by scene and parametrisation (rho)')
-plt.xticks(index + 2 * bar_width, tuple(scns))
-plt.legend()
-#plt.tight_layout()
+ax.set_ylim((0,4))
+plt.xlabel('Time (in seconds)')
+plt.ylabel('Average number of found objects')
+#plt.title('Average number of found objects by parametrisation (rho) over time')
+plt.xticks(index + 2 * bar_width, tuple(times))
+plt.legend(loc=2)
+plt.tight_layout()
 plt.show()

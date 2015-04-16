@@ -1,8 +1,13 @@
 <launch>
   <arg name="robot" default="scitos"/>
   <arg name="input_file_plans_dir" default="$(find viper)/data/$(arg robot)"/>
-  <arg name="input_file_plans_name" default="plans.json"/>
-  <arg name="input_file_plan_values" default="$(find viper)/data/$(arg robot)/plan_values.json"/>
+
+  <arg name="rho" default="1.0"/>
+  <arg name="run" default="0"/>
+  <arg name="scn" default="A"/>
+
+  <arg name="input_file_plans_name" default="plans-$(arg scn)-$(arg rho)-$(arg run).json"/>
+  <arg name="input_file_plan_values" default="$(find viper)/data/$(arg robot)/plans-$(arg scn)-$(arg rho)-$(arg run)-VALUES.json"/>
 
   <include file="$(find viper)/launch/$(arg robot)/_execute_plan.launch"/>
 

@@ -4,6 +4,15 @@ from matplotlib.pylab import *
 import rospy
 import jsonpickle
 
+import matplotlib
+
+font = {'family' : 'normal',
+#        'weight' : 'bold',
+        'size'   : 32}
+
+matplotlib.rc('font', **font)
+
+
 rospy.init_node('gen_cost_hist')
 rospy.loginfo("Started histogramm generation.")
 

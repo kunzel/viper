@@ -12,7 +12,7 @@ INPUT_FILE_PLANS_DIR = rospy.get_param('~input_file_plans_dir', '.')
 INPUT_FILE_PLANS_NAME = rospy.get_param('~input_file_plans_name', 'plans.json')
 INPUT_FILE_PLANS = INPUT_FILE_PLANS_DIR + '/' + INPUT_FILE_PLANS_NAME 
 INPUT_FILE_PLAN_VALUES = rospy.get_param('~input_file_plan_values', 'plan_values.json')
-OUTPUT_FILE = INPUT_FILE_PLANS_DIR + '/' + INPUT_FILE_PLANS_NAME.split('.json')[0] + '-out.json' 
+OUTPUT_FILE = INPUT_FILE_PLANS_DIR + '/' + INPUT_FILE_PLANS_NAME.split('.json')[0] + '-EXEC_LOG.json' 
 
 plans = []
 with open(INPUT_FILE_PLANS, "r") as input_file_plans:
@@ -38,12 +38,18 @@ for p in plans:
         break
 else:
     p = None
-    
+
+if p.ID != best_plan_id:
+    print "Something bad has happend!"
 #best_plan_idx = plans.index(p)
 
 plan_exec = PlanExecutive(robot)
 found_objs = []
 run_stats = plan_exec.execute(p.views) #  plans[best_plan_idx].views)
+
+
+run_stats['expected_costs']=  plan_values[best_plan_id]
+run_stats['executed_plan'] =  best_plan_id
 
 print "Found objects:"
 for o in run_stats['found_objs']:

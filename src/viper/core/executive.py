@@ -11,7 +11,7 @@ class PlanExecutive(object):
     def execute(self, plan):
         run_stats = {}
         start_time = rospy.Time.now()
-        run_stats['start_time'] = start_time
+        run_stats['start_time'] = start_time - start_time
         run_stats['plan'] = plan
         run_times = []
         found_objs = []
@@ -19,7 +19,8 @@ class PlanExecutive(object):
             self._robot.goto(view)
             objs = self._robot.perform_action(view)
             current_time = rospy.Time.now()
-            run_times.append([current_time, view.ID])
+            time = current_time - start_time
+            run_times.append([time, view.ID])
             if objs != None:
                 for o in objs:
                     time = current_time - start_time
@@ -27,6 +28,6 @@ class PlanExecutive(object):
         run_stats['run_times'] = run_times
         run_stats['found_objs'] = found_objs
         end_time = rospy.Time.now() -  start_time
-        run_stats['end_time'] = start_time
+        run_stats['end_time'] = end_time
         return run_stats
 
