@@ -1,0 +1,8 @@
+<launch>
+  <arg name="robot" default="scitos"/>
+  <arg name="input_file_costs" default="$(find viper)/data/$(arg robot)/view_costs.json"/>
+
+  <node name="generate_cost_hist" pkg="viper" type="gen_cost_hist.py" output="screen">
+    <param name="input_file_costs" type="string" value="$(arg input_file_costs)"/>
+  </node>
+</launch>

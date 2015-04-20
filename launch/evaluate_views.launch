@@ -1,4 +1,4 @@
-<launch>
+bj<launch>
   <arg name="robot" default="scitos"/>
   <arg name="input_file" default="$(find viper)/data/$(arg robot)/views.json"/>
   <arg name="output_file_values" default="$(find viper)/data/$(arg robot)/view_values.json"/>

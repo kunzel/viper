@@ -79,4 +79,4 @@ with open(OUTPUT_FILE, "w") as outfile:
     rospy.loginfo("Saved %s plans" % len(plans))
 
 rospy.loginfo("Stopped plan generation.")
-
+rospy.spin()

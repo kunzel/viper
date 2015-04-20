@@ -239,10 +239,10 @@ robot_poses  = PoseArray()
 robot_poses.header.frame_id = '/map'
 robot_poses.poses = []
 for v in views:
-    robot_poses.poses.append(v.get_robot_pose())
+    robot_poses.poses.append(v.get_ptu_pose())
 robot_poses_pub.publish(robot_poses)
 
-view_costs = planner.compute_view_costs(views)
+#view_costs = planner.compute_view_costs(views)
 
 # triangle marker
 markerArray = MarkerArray()    
@@ -263,36 +263,36 @@ idx = 0
 for view in views:
     val = view_values[view.ID]
     print idx, val
-    if val > 0:
+    if val > 100:
         print "Create frustum marker with value", val
         vis.create_frustum_marker(frustum_marker, view, view.get_ptu_pose(), view_values)
     idx += 1
 vis.pubfrustum.publish(frustum_marker)
 
-# cost marker
-cost_marker = MarkerArray()    
-i = 0
-for view1 in views:
-    j = 0
-    for view2 in views:
-        if j <= i:
-            cost = view_costs[view1.ID][view2.ID]
-            print i, j, cost
-            j += 1
-            if cost > 0.0:
-                print "Create cost marker with value", cost
-                vis.create_cost_marker(cost_marker, view1, view2, view_costs)
-    i += 1
-vis.pubcost.publish(cost_marker)
+# # cost marker
+# cost_marker = MarkerArray()    
+# i = 0
+# for view1 in views:
+#     j = 0
+#     for view2 in views:
+#         if j <= i:
+#             cost = view_costs[view1.ID][view2.ID]
+#             print i, j, cost
+#             j += 1
+#             if cost > 0.0:
+#                 print "Create cost marker with value", cost
+#                 vis.create_cost_marker(cost_marker, view1, view2, view_costs)
+#     i += 1
+# vis.pubcost.publish(cost_marker)
 
        
 with open(OUTPUT_FILE_VALUES, "w") as outfile:
     json_data = jsonpickle.encode(view_values)
     outfile.write(json_data)
 
-with open(OUTPUT_FILE_COSTS, "w") as outfile:
-    json_data = jsonpickle.encode(view_costs)
-    outfile.write(json_data)    
+# with open(OUTPUT_FILE_COSTS, "w") as outfile:
+#     json_data = jsonpickle.encode(view_costs)
+#     outfile.write(json_data)    
 
 rospy.loginfo("Finished view evaluation.")
 rospy.spin()

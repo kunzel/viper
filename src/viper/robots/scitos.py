@@ -60,11 +60,12 @@ class ScitosView(viper.core.view.View):
 ##########################################################################
 
 import random
-from nav_goals_msgs.srv import NavGoals
-from nav_goals_msgs.srv import WeightedNavGoals
+from nav_goals_generator.srv import NavGoals
+from nav_goals_generator.srv import WeightedNavGoals
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Polygon
 from geometry_msgs.msg import Point32
+from geometry_msgs.msg import Pose
 from viper.srv import PTU_FK
 
 class ScitosViewGenerator(viper.core.robot.ViewGenerator):
@@ -80,11 +81,12 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
 
     def setup(self):
         
-        self.inflation_radius = float(rospy.get_param('inflation_radius', '-0.5'))
+        self.inflation_radius = float(rospy.get_param('inflation_radius', '0.0'))
 
-        points = rospy.get_param('roi', '[]')
+        #points = rospy.get_param('roi', '[]')
 
         roi = rospy.get_param('roi',[])
+        
         points = []
         for point in roi:
             rospy.loginfo('Point: %s', point)
@@ -113,7 +115,7 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
         self.views = []
 
     def generate_views(self):        
-        rospy.loginfo('Generate views')
+        rospy.loginfo('Generate views (%s views at pose)' % self.views_at_pose)
         try:
             resp = self.nav_goals(1, self.inflation_radius, self.roi)
             
@@ -129,8 +131,9 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
                 jointstate.position = [pan, tilt]
                 jointstate.velocity = [self.velocity, self.velocity]
                 jointstate.effort = [float(1.0), float(1.0)]
-                resp_ptu_pose = self.ptu_fk(pan,tilt,pose)
-                view = ScitosView(self.next_id(), pose,jointstate,resp_ptu_pose.pose)
+                #resp_ptu_pose = self.ptu_fk(pan,tilt,pose)
+                p = Pose()
+                view = ScitosView(self.next_id(), pose,jointstate,p) #resp_ptu_pose.pose)
                 self.views.append(view)
                 
         except rospy.ServiceException, e:
@@ -145,6 +148,7 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
         if not self.views:
             self.generate_views()
             if not self.views:
+                print "SOMETHING BAD HAPPEND!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
                 return None
         rospy.loginfo('Generate view')
         return self.views.pop()
@@ -165,6 +169,10 @@ class ScitosViewController(viper.core.robot.ViewController):
 
     def setup(self):
         self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        self.ptu_client = actionlib.SimpleActionClient('SetPTUState', PtuGotoAction)
+        rospy.loginfo("Wait for PTU action server")
+        self.ptu_client.wait_for_server(rospy.Duration(60))
+        
         self.ptu_cmd = rospy.Publisher('/ptu/cmd', JointState)
         rospy.Subscriber("/ptu/state", JointState, self.ptu_cb)
 
@@ -178,12 +186,12 @@ class ScitosViewController(viper.core.robot.ViewController):
             self.setup()
             self.first_call = False
 
-        try:
-            rospy.loginfo("Wait for /ptu/state")
-            msg = rospy.wait_for_message("/ptu/state", JointState, timeout=10.0)
-            self.ptu_cb(msg)
-        except rospy.ROSException, e:
-            rospy.logwarn("Failed to get /ptu/state")
+        #try:
+        #    rospy.loginfo("Wait for /ptu/state")
+        #    msg = rospy.wait_for_message("/ptu/state", JointState, timeout=10.0)
+        #    self.ptu_cb(msg)
+        #except rospy.ROSException, e:
+        #    rospy.logwarn("Failed to get /ptu/state")
 
         
         self.robot_pose = view.get_robot_pose()
@@ -192,27 +200,28 @@ class ScitosViewController(viper.core.robot.ViewController):
         mb_thread = threading.Thread(target = self.move_base)
         mb_thread.start()
 
-        # 
-        # ptu_client = actionlib.SimpleActionClient('SetPTUState', PtuGotoAction)
-        # goal = PtuGotoGoal()
-        # goal.pan = ptu_state.position[ptu_state.name.index('pan')] * 180/math.pi
-        # goal.tilt = ptu_state.position[ptu_state.name.index('tilt')]  * 180/math.pi
-        # goal.pan_vel = ptu_state.velocity[ptu_state.name.index('pan')] + 10
-        # goal.tilt_vel = ptu_state.velocity[ptu_state.name.index('tilt')] + 10
-        # ptu_client.send_goal(goal)
-        # ptu_client.wait_for_result()
 
-        joint_state = view.get_ptu_state()        
-        joint_state.header.frame_id = 'tessdaf'
-        joint_state.name = ['pan', 'tilt']
-        joint_state.position = [joint_state.position[joint_state.name.index('pan')],joint_state.position[joint_state.name.index('tilt')]]
-        joint_state.velocity = [joint_state.velocity[joint_state.name.index('pan')],joint_state.velocity[joint_state.name.index('tilt')]]
-        joint_state.effort = [float(1.0),float(1.0)]
-        self.ptu_cmd.publish(joint_state)
+        ptu_state = view.get_ptu_state()
 
-        while not self.achieved(joint_state):
-            rospy.loginfo("Wait for ptu")
-            rospy.sleep(rospy.Duration(0.5))
+        goal = PtuGotoGoal()
+        goal.pan = ptu_state.position[ptu_state.name.index('pan')] * 180/math.pi
+        goal.tilt = ptu_state.position[ptu_state.name.index('tilt')]  * 180/math.pi
+        goal.pan_vel = ptu_state.velocity[ptu_state.name.index('pan')] * 100
+        goal.tilt_vel = ptu_state.velocity[ptu_state.name.index('tilt')] * 100
+        self.ptu_client.send_goal(goal)
+        self.ptu_client.wait_for_result()
+
+        # joint_state = view.get_ptu_state()        
+        # joint_state.header.frame_id = 'tessdaf'
+        # joint_state.name = ['pan', 'tilt']
+        # joint_state.position = [joint_state.position[joint_state.name.index('pan')],joint_state.position[joint_state.name.index('tilt')]]
+        # joint_state.velocity = [joint_state.velocity[joint_state.name.index('pan')],joint_state.velocity[joint_state.name.index('tilt')]]
+        # joint_state.effort = [float(1.0),float(1.0)]
+        # self.ptu_cmd.publish(joint_state)
+
+        #while not self.achieved(joint_state):
+        #    rospy.loginfo("Wait for ptu")
+        #    rospy.sleep(rospy.Duration(0.5))
         rospy.loginfo("Reached ptu goal")
         while self.mb_done == False: #self.client.get_state() == GoalStatus.ACTIVE:
             rospy.sleep(rospy.Duration(0.5))
@@ -399,7 +408,12 @@ import json
 class ScitosViewAction(viper.core.robot.ViewAction):
 
     def __init__(self):
-        self.obj_list = list()
+        pass
+        #self.obj_list = list()
+        #rospy.Subscriber("semcam", String, self.callback)
+        #self.obj_list = []
+        #self.active = False
+        #self.first_call = False
 
     def camera_cb(self, data):
         obj_list = json.loads(data.data)
@@ -408,6 +422,19 @@ class ScitosViewAction(viper.core.robot.ViewAction):
         for obj_desc in obj_list:
             rospy.loginfo("Perceived: %s" % obj_desc.get('name'))
         return obj_list
+
+    
+    # def callback(self,data):
+    #     if self.active == True and self.first_call == True:
+    #         self.first_call = False
+    #         obj_list = json.loads(data.data)
+    #         if len(obj_list) == 0:
+    #             rospy.loginfo("Nothing perceived")
+    #         for obj_desc in obj_list:
+    #             rospy.loginfo("Perceived: %s" % obj_desc.get('name'))
+
+    #         for obj in obj_list:
+    #             self.obj_list.append(obj)
     
     def execute(self):
         try:
@@ -417,3 +444,15 @@ class ScitosViewAction(viper.core.robot.ViewAction):
             return self.camera_cb(msg)
         except rospy.ROSException, e:
             rospy.logwarn("Failed to get /semcam")
+
+
+        # self.obj_list = []
+        # self.active = True
+        # self.first_call = True
+        # while self.first_call == True:
+        #     rospy.sleep(rospy.Duration(0.5))
+        #     rospy.loginfo("Wait for semcam")
+        # self.active = False
+        # return self.obj_list
+
+        

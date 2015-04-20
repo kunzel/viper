@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   tf_conversions
   message_generation
+  cmake_modules
 )
 
 find_package(octomap 1.6 REQUIRED)
