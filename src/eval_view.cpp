@@ -119,6 +119,9 @@ int compute_value(Frustum frustum, std::vector<unsigned short int> keys, std::ve
   int occupied = 0;
   int WEIGHT = 1; // compute weight from QSR model
 
+  if (input_tree == NULL)
+    return 0;
+
   for(OcTree::leaf_iterator it = input_tree->begin_leafs(),
         end=input_tree->end_leafs(); it!= end; ++it)
     {
@@ -281,10 +284,20 @@ bool view_eval(viper::ViewValue::Request  &req,
                viper::ViewValue::Response &res)
 {
   
-  ROS_INFO("Received service request.");
+  ROS_INFO("Received service request: view_eval");
   geometry_msgs::Pose camera_pose = req.pose; 
 
-	// Generate frustum.
+  OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
+  
+  if (octree){
+    ROS_INFO("Map received (%zu nodes, %f m res)", octree->size(), octree->getResolution());
+    input_tree = extract_supporting_planes(octree);
+  } else{
+    ROS_ERROR("No map received!");
+    input_tree = NULL;
+  }
+  
+  // Generate frustum.
   Frustum f = generate_frustum(camera_pose);
 	
   int value = compute_value(f, res.keys, res.values);
@@ -306,7 +319,7 @@ int main (int argc, char** argv)
   //node.getParam("frustum_far", frustum_far);
   //node.getParam("frustum_angle", frustum_angle);
 
-  input_tree = retrieve_octree();  
+  //input_tree = retrieve_octree();  
   
   ros::ServiceServer view_eval_service = node.advertiseService("view_eval", view_eval);
 

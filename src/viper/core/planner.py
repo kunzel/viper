@@ -64,10 +64,10 @@ class ViewPlanner(object):
                 views.append(view)
         return views
 
-    def compute_view_values(self, views):
+    def compute_view_values(self, views, octomap):
         view_values = dict()
         for v in views:
-            value = self._robot.evaluate(v)
+            value = self._robot.evaluate(v, octomap)
             view_values[v.ID] = value
         return view_values
 

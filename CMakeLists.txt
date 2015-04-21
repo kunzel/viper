@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   tf_conversions
   message_generation
+  octomap_msgs
   cmake_modules
 )
 
@@ -75,7 +76,7 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs geometry_msgs # Or other packages containing msgs
+  std_msgs geometry_msgs octomap_msgs# Or other packages containing msgs
 )
 
 ###################################

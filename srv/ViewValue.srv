@@ -1,4 +1,5 @@
 geometry_msgs/Pose pose
+octomap_msgs/Octomap octomap	
 ---
 int32 value
 uint16[] keys 

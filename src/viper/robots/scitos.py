@@ -375,7 +375,7 @@ class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
 
 ##########################################################################
 import math
-from viper.srv import ViewValue
+from viper.srv import ViewValue, ViewValueRequest
 
     
 class ScitosViewEvaluator(viper.core.robot.ViewEvaluator):
@@ -389,17 +389,25 @@ class ScitosViewEvaluator(viper.core.robot.ViewEvaluator):
         except rospy.ServiceException, e:
             rospy.logerr("Service call failed: %s" % e)
     
-    def evaluate(self, view):
+    def evaluate(self, view, octomap):
         if self.first_call:
             self.setup()
             self.first_call = False
 
 
-        resp = self.view_eval(view.get_ptu_pose())
-        view.set_keys(resp.keys);
-        view.set_values(resp.values);
-        view.set_frustum(resp.frustum)
-        return resp.value #math.fabs(view.get_robot_pose().position.x + view.get_robot_pose().position.y)
+        req = ViewValueRequest()
+        req.pose = view.get_ptu_pose()
+        req.octomap = octomap
+        try:
+            resp = self.view_eval(req)
+            view.set_keys(resp.keys)
+            view.set_values(resp.values)
+            view.set_frustum(resp.frustum)
+            return resp.value #math.fabs(view.get_robot_pose().position.x + view.get_robot_pose().position.y
+        except rospy.ServiceException, e:
+            rospy.logerr("Service call failed: %s" % e)
+        return 0
+
 
 ##########################################################################
 from std_msgs.msg import String

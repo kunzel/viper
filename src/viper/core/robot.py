@@ -22,8 +22,8 @@ class Robot(object):
     def cost(self, view1, view2):
         return self._view_transition_model.cost(view1, view2)
 
-    def evaluate(self, view):
-        return self._view_evaluator.evaluate(view)
+    def evaluate(self, view, octomap):
+        return self._view_evaluator.evaluate(view, octomap)
 
     def goto(self, view):
         return self._view_controller.execute(view)
@@ -56,7 +56,7 @@ class ViewTransitionModel(object):
     
 class ViewEvaluator(object):
 
-    def evaluate(self, view):
+    def evaluate(self, view, octomap):
         pass
 
 #######################################
