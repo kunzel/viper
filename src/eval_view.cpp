@@ -284,10 +284,17 @@ bool view_eval(viper::ViewValue::Request  &req,
                viper::ViewValue::Response &res)
 {
   
-  ROS_INFO("Received service request: view_eval");
+  ROS_INFO("Received service request: view_eval (%f %f %f)", req.pose.position.x, req.pose.position.y, req.pose.position.z);
   geometry_msgs::Pose camera_pose = req.pose; 
 
-  OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
+  //OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
+  
+  AbstractOcTree* tree = octomap_msgs::fullMsgToMap(req.octomap);
+  if (!tree){
+    ROS_ERROR("Failed to recreate octomap");
+    return false;
+  }
+  OcTree* octree = dynamic_cast<OcTree*>(tree);
   
   if (octree){
     ROS_INFO("Map received (%zu nodes, %f m res)", octree->size(), octree->getResolution());
@@ -301,7 +308,7 @@ bool view_eval(viper::ViewValue::Request  &req,
   Frustum f = generate_frustum(camera_pose);
 	
   int value = compute_value(f, res.keys, res.values);
-  
+  ROS_INFO("VALUE: %i", value);
   res.value = value;
   res.frustum = get_points(generate_local_frustum());
 

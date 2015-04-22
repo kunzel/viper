@@ -131,9 +131,9 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
                 jointstate.position = [pan, tilt]
                 jointstate.velocity = [self.velocity, self.velocity]
                 jointstate.effort = [float(1.0), float(1.0)]
-                #resp_ptu_pose = self.ptu_fk(pan,tilt,pose)
+                resp_ptu_pose = self.ptu_fk(pan,tilt,pose)
                 p = Pose()
-                view = ScitosView(self.next_id(), pose,jointstate,p) #resp_ptu_pose.pose)
+                view = ScitosView(self.next_id(), pose,jointstate, resp_ptu_pose.pose)
                 self.views.append(view)
                 
         except rospy.ServiceException, e:
