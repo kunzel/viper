@@ -112,7 +112,7 @@ OcTree* retrieve_octree()
 OcTree* input_tree;
 
 
-int compute_value(Frustum frustum, std::vector<unsigned short int> keys, std::vector<int> node_values)
+int compute_value(Frustum frustum, std::vector<unsigned short int> &keys, std::vector<int> &node_values)
 {  
   int value = 0;
   int free = 0;
@@ -132,10 +132,6 @@ int compute_value(Frustum frustum, std::vector<unsigned short int> keys, std::ve
           double x = it.getX();
           double y = it.getY();
           double z = it.getZ();
-          const OcTreeKey key = it.getKey();
-          OcTreeKey::KeyHash computeHash;
-          unsigned short int hash = computeHash(key);
-          keys.push_back(hash);
           //std::cerr<< "xyz:" << x << "," << y << "," << z << " hash:" << hash << std::endl;
           occupied++;
           Vec3 point(x, y, z);
@@ -143,6 +139,10 @@ int compute_value(Frustum frustum, std::vector<unsigned short int> keys, std::ve
             {
               //ROS_INFO("Node inside frustum");
               int node_value = WEIGHT * size;
+              const OcTreeKey key = it.getKey();
+              OcTreeKey::KeyHash computeHash;
+              unsigned short int hash = computeHash(key);
+              keys.push_back(hash);
               node_values.push_back(node_value);
               value += node_value;
             }
@@ -309,6 +309,8 @@ bool view_eval(viper::ViewValue::Request  &req,
 	
   int value = compute_value(f, res.keys, res.values);
   ROS_INFO("VALUE: %i", value);
+  ROS_INFO("KEYS SIZE: %i", res.keys.size());
+  ROS_INFO("VALUES SIZE: %i", res.values.size());
   res.value = value;
   res.frustum = get_points(generate_local_frustum());
 
