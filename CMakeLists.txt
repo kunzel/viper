@@ -120,8 +120,12 @@ target_link_libraries(kinematics_test ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${E
 add_executable(ptu_fk src/ptu_fk.cpp)
 target_link_libraries(ptu_fk ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN_LIBRARIES})
 
+add_dependencies(ptu_fk viper_generate_messages_cpp)
+
 add_executable(eval_view src/eval_view.cpp)
 target_link_libraries(eval_view ${catkin_LIBRARIES} ${OCTOMAP_LIBRARY_DIRS})
+
+add_dependencies(eval_view viper_generate_messages_cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
