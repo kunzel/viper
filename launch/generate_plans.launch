@@ -1,9 +1,10 @@
 <launch>
   <arg name="robot" default="scitos"/>
-  <arg name="num_of_plans" default="1000"/>
-  <arg name="plan_length" default="25"/>
+  <arg name="num_of_plans" default="3000"/>
+  <!-- <arg name="plan_length" default="25"/> -->
+  <arg name="time_window" default="50"/>
   <arg name="rho" default="1.0"/>
-  <arg name="input_file" default="$(find viper)/data/$(arg robot)/views.json"/>
+  <arg name="input_file" default="$(find viper)/data/$(arg robot)/view_keys.json"/>
   <arg name="input_file_values" default="$(find viper)/data/$(arg robot)/view_values.json"/>
   <arg name="input_file_costs" default="$(find viper)/data/$(arg robot)/view_costs.json"/>
 
@@ -17,7 +18,8 @@
   <node name="generate_plans" pkg="viper" type="gen_plans.py" output="screen">
     <param name="robot" type="string" value="$(arg robot)"/>
     <param name="num_of_plans" type="int" value="$(arg num_of_plans)"/>
-    <param name="plan_length" type="int" value="$(arg plan_length)"/>
+    <!-- <param name="plan_length" type="int" value="$(arg plan_length)"/>-->
+    <param name="time_window" type="int" value="$(arg time_window)"/>
     <param name="rho"  type="double" value="$(arg rho)"/>
     <param name="input_file" type="string" value="$(arg input_file)"/>
     <param name="input_file_values" type="string" value="$(arg input_file_values)"/>

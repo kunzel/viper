@@ -221,6 +221,7 @@ robot = viper.robots.scitos.ScitosRobot()
 INPUT_FILE = rospy.get_param('~input_file',   'views.json')
 OUTPUT_FILE_COSTS = rospy.get_param('~output_file_costs', 'view_costs.json')
 OUTPUT_FILE_VALUES = rospy.get_param('~output_file_values', 'view_values.json')
+OUTPUT_FILE_VIEW_KEYS = rospy.get_param('~output_file_view_keys', 'view_keys.json')
 
 views = []
 with open(INPUT_FILE, "r") as input_file:
@@ -228,12 +229,28 @@ with open(INPUT_FILE, "r") as input_file:
     views = jsonpickle.decode(json_data)
     rospy.loginfo("Loaded %s views"  % len(views))
 
+from octomap_msgs.msg import Octomap
+from octomap_msgs.srv import GetOctomap, GetOctomapRequest
 
+octomap = Octomap()
+# #octomap_service_name = '/Semantic_map_publisher_node/SemanticMapPublisher/ObservationOctomapService'
+# rospy.loginfo("Waiting for octomap service")
+# octomap_service_name = '/octomap_full'
+# rospy.wait_for_service(octomap_service_name)
+# rospy.loginfo("Done")
+# try:
+#     octomap_service = rospy.ServiceProxy(octomap_service_name, GetOctomap)
+#     req = GetOctomapRequest()
+#     rospy.loginfo("Requesting octomap from semantic map service")
+#     res = octomap_service(req)
+#     octomap = res.map
+#     rospy.loginfo("Received octomap: size:%s resolution:%s", len(octomap.data), octomap.resolution)
+
+# except rospy.ServiceException, e:
+#     rospy.logerr("Service call failed: %s"%e)
 
 planner = ViewPlanner(robot)
-
-view_values = planner.compute_view_values(views)
-
+view_values = planner.compute_view_values(views, octomap)
 
 robot_poses  = PoseArray()
 robot_poses.header.frame_id = '/map'
@@ -264,7 +281,7 @@ for view in views:
     val = view_values[view.ID]
     print idx, val
     if val > 100:
-        print "Create frustum marker with value", val
+        print "Create frustum marker with value", val, len(view.get_keys())
         vis.create_frustum_marker(frustum_marker, view, view.get_ptu_pose(), view_values)
     idx += 1
 vis.pubfrustum.publish(frustum_marker)
@@ -288,6 +305,10 @@ vis.pubfrustum.publish(frustum_marker)
        
 with open(OUTPUT_FILE_VALUES, "w") as outfile:
     json_data = jsonpickle.encode(view_values)
+    outfile.write(json_data)
+
+with open(OUTPUT_FILE_VIEW_KEYS, "w") as outfile:
+    json_data = jsonpickle.encode(views)
     outfile.write(json_data)
 
 # with open(OUTPUT_FILE_COSTS, "w") as outfile:

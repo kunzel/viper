@@ -13,11 +13,12 @@ import viper.robots.scitos
 robot = viper.robots.scitos.ScitosRobot()
 
 NUM_OF_PLANS = rospy.get_param('~num_of_plans', 10)
-PLAN_LENGTH = rospy.get_param('~plan_length', 20)
+#PLAN_LENGTH = rospy.get_param('~plan_length', 20)
+TIME_WINDOW = rospy.get_param('~time_window', 120)
 RHO  = rospy.get_param('~rho', 1.0)
 
 
-INPUT_FILE = rospy.get_param('~input_file', 'views.json')
+INPUT_FILE = rospy.get_param('~input_file', 'view_keys.json')
 INPUT_FILE_VALUES = rospy.get_param('~input_file_values', 'view_values.json')
 INPUT_FILE_COSTS = rospy.get_param('~input_file_costs', 'view_costs.json')
 OUTPUT_FILE = rospy.get_param('~output_file', 'plans.json')
@@ -66,11 +67,12 @@ vcosts = dict()
 for v in views:
     cost = robot.cost(current_view,v)
     vcosts[v.ID] = cost
+    view_costs[v.ID][current_view.ID] = cost  
 
 view_costs[current_view.ID] = vcosts
 
 rospy.loginfo("Started plan sampling.")
-plans = planner.sample_plans(NUM_OF_PLANS, PLAN_LENGTH, RHO, views, view_values, view_costs, current_view.ID)
+plans = planner.sample_plans(NUM_OF_PLANS, TIME_WINDOW, RHO, views, view_values, view_costs, current_view, current_view)
 rospy.loginfo("Stopped plan sampling.")
 
 with open(OUTPUT_FILE, "w") as outfile:

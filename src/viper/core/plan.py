@@ -10,4 +10,7 @@ class Plan(object):
 
     def append(self, view):
         self.views.append(view)
+
+    def pop(self):
+        self.views.pop()
         
