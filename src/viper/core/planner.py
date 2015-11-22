@@ -1,5 +1,6 @@
 import logging; logger = logging.getLogger("viper." + __name__)
 import viper.core.robot
+import itertools
 import random
 import math
 import time 
@@ -198,12 +199,137 @@ class ViewPlanner(object):
         plans = []
         for i in range(0, num_of_plans):
             print "Sample plan ", i
-            plan = self.sample_plan_DEP_src(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
+            plan = self.baseline_greedy_selection_plus_tsp(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
             v_start = view_start.ID
             print "Length: ", len(plan.views), "Cost: ", plan.cost, "Reward: ", plan.reward 
             plans.append(plan)
         return plans
 
+    def baseline_greedy_selection_plus_tsp(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+    
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+        A = list()
+        for vid in remaining_views.keys():
+            A.append( (view_values[vid], vid) ) 
+
+        A_sorted = sorted(A, reverse=True)
+        views_sorted = [v for (val,v) in A_sorted]
+
+        n = 5
+        old_cost = 0
+        old_plan = Plan(plan_id)
+        if n == n:
+        #while n < 2:#len(A_sorted):
+
+            considered_views = [view_start.ID] + views_sorted[:n] # consider only the best n views 
+
+            print A_sorted[:n]
+            print considered_views
+            
+            (tmp_cost, tmp_plan) = self.solve_tsp(plan_id, considered_views, views, view_values, view_costs, view_start, view_end) 
+            print "RETURNED", tmp_cost, len(tmp_plan.views)
+            
+            if tmp_cost > float(time_window):
+                return old_plan
+            else:
+                (old_cost, old_plan) = (tmp_cost, tmp_plan)
+            # consider one view more 
+            n += 1
+
+        # No plan was found for time_window! Return plan with v_start/v_end: here the same
+        return old_plan
+
+    def solve_tsp(self, plan_id, considered_views, views, view_values, view_costs, view_start, view_end):
+        tour = []
+        vid = ['XXX'] + considered_views
+        numViews = len(considered_views)
+        
+	vertices = range(1, numViews +1)
+	A = {}
+	
+	# Do this here, as m starts from 2
+	A[tuple([1])] = {}
+	A[tuple([1])][1] = 0
+	
+	for m in range(2, numViews + 1):	# m = subproblem size (cardinality of S) 
+		print("M =", m)
+		combos = itertools.combinations(vertices, m)
+		
+		# if m >= 4:
+		# 	toDel = itertools.combinations(vertices, m - 2)
+		# 	for key in toDel:
+		# 		if 1 in key:
+		# 			del A[key]
+			
+		for S in combos:			# Take all possible subsets of size m
+			# POSSIBLE OPTIMIZATION HERE:
+				# Map all possible subsets as bitmap strings and just set cities which are included in the subset to 1.
+				# This would reduce memory consumption a lot and speed up the loop operations.
+				# E.G: 0000000000000000000000111 (single string) as a dictionary key instead of the tuple of n integers.
+			if 1 not in S:			# S has to contain 1
+				continue
+			# Set up base cases for this m
+			A[S] = {}
+			A[S][1] = float("inf")
+			
+			for j in S:				# Iterate through all j in S where j != 1 (j = 1 has been taken care of in base cases)
+				if j == 1:
+					continue
+				minASj = float("inf")
+				for k in S:			# Iterate through all k in S where k != j and find best k for the subproblem
+					if k == j:
+						continue
+					sNew = list(S)
+					sNew.remove(j)
+					if A[tuple(sNew)][k] + view_costs[vid[k]][vid[j]] < minASj:
+						minASj = A[tuple(sNew)][k] + view_costs[vid[k]][vid[j]]
+				A[S][j] = minASj
+
+	# Find the shortest tour out of all narrowed candidates
+	minTour = float("inf")
+	for j in range(2, numViews + 1):
+		if A[tuple(range(1, numViews + 1))][j] + view_costs[vid[j]][vid[1]] < minTour:	# Just compare the total distances including the final hop
+			print(tuple(range(1, numViews + 1)))
+			minTour = A[tuple(range(1, numViews + 1))][j] + view_costs[vid[j]][vid[1]]
+                        minJ = j
+
+
+        # RECONSTRUCT TOUR
+        #print "min J:", minJ
+        minJs = [minJ]
+        subs = [i for i in range(1, numViews + 1) if i not in minJs]
+        tour.append(1) # end
+        tour.append(minJ)
+        #print "SUBS:", subs, "A[SUBS]", A[tuple(subs)]
+        while subs:
+            minJ = min(A[tuple(subs)].items(), key=lambda x: x[1])[0]
+            tour.append(minJ)
+            minJs.append(minJ)
+            subs = [i for i in range(1, numViews + 1) if i not in minJs]
+
+        rtour = list(reversed(tour))
+
+        # VERIFY TOUR COSTS!!!
+        # print "TOUR:", rtour
+        # for i in range(0,len(rtour)-1):
+        #     cost += view_costs[vid[rtour[i]]][vid[rtour[i+1]]]
+        # print "COST:", cost
+        # print "MINTOUR: ", minTour
+
+        plan = Plan(plan_id)
+        plan.append(view_start)
+        for node in rtour:
+            view_id = vid[node]
+            for v in views:
+                if view_id == v.ID:
+                    plan.append(v)
+        plan.append(view_end)
+	return (minTour, plan)
+        
         
     def sample_plan_1984(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
         l = 4
