@@ -22,6 +22,7 @@ INPUT_FILE = rospy.get_param('~input_file', 'view_keys.json')
 INPUT_FILE_VALUES = rospy.get_param('~input_file_values', 'view_values.json')
 INPUT_FILE_COSTS = rospy.get_param('~input_file_costs', 'view_costs.json')
 OUTPUT_FILE = rospy.get_param('~output_file', 'plans.json')
+OUTPUT_FILE_BEST = rospy.get_param('~output_file_best', 'best_plan.json')
 
 views = []
 with open(INPUT_FILE, "r") as input_file:
@@ -62,7 +63,7 @@ rospy.loginfo("Current pose: %s" % current_pose)
 current_ptu_state = JointState()
 current_ptu_state.name = ['pan', 'tilt']
 current_ptu_state.position = [jointstate_msg.position[jointstate_msg.name.index('pan')],jointstate_msg.position[jointstate_msg.name.index('tilt')]]
-current_view =  viper.robots.scitos.ScitosView(-1, current_pose, current_ptu_state, None) # ptu pose is not needed for cost calculation
+current_view =  viper.robots.scitos.ScitosView("-1", current_pose, current_ptu_state, None) # ptu pose is not needed for cost calculation
 vcosts = dict()
 for v in views:
     cost = robot.cost(current_view,v)
@@ -70,15 +71,35 @@ for v in views:
     view_costs[v.ID][current_view.ID] = cost  
 
 view_costs[current_view.ID] = vcosts
+view_costs[current_view.ID][current_view.ID] = 0  
 
 rospy.loginfo("Started plan sampling.")
 plans = planner.sample_plans(NUM_OF_PLANS, TIME_WINDOW, RHO, views, view_values, view_costs, current_view, current_view)
 rospy.loginfo("Stopped plan sampling.")
 
+max_id = -1
+max_reward = 0
+best_plan = None
+for p in plans:
+    if p.reward >= max_reward:
+        max_reward = p.reward
+        max_id = p.ID
+        best_plan = p
+
+for p in plans:
+    if p.ID == max_id: #min_cost_plan_id:
+        print "Best plan: ID: ", p.ID, " Value: ", p.reward #plan_values[p.ID]
+
+with open(OUTPUT_FILE_BEST, "w") as outfile:
+    json_data = jsonpickle.encode(best_plan)
+    outfile.write(json_data)
+    rospy.loginfo("Saved best plan")
+
+        
 with open(OUTPUT_FILE, "w") as outfile:
     json_data = jsonpickle.encode(plans)
     outfile.write(json_data)
     rospy.loginfo("Saved %s plans" % len(plans))
 
 rospy.loginfo("Stopped plan generation.")
-rospy.spin()
+#rospy.spin()

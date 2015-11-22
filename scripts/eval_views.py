@@ -259,7 +259,7 @@ for v in views:
     robot_poses.poses.append(v.get_ptu_pose())
 robot_poses_pub.publish(robot_poses)
 
-#view_costs = planner.compute_view_costs(views)
+view_costs = planner.compute_view_costs(views)
 
 # triangle marker
 markerArray = MarkerArray()    
@@ -280,7 +280,7 @@ idx = 0
 for view in views:
     val = view_values[view.ID]
     print idx, val
-    if val > 100:
+    if val > 50:
         print "Create frustum marker with value", val, len(view.get_keys())
         vis.create_frustum_marker(frustum_marker, view, view.get_ptu_pose(), view_values)
     idx += 1
@@ -311,9 +311,9 @@ with open(OUTPUT_FILE_VIEW_KEYS, "w") as outfile:
     json_data = jsonpickle.encode(views)
     outfile.write(json_data)
 
-# with open(OUTPUT_FILE_COSTS, "w") as outfile:
-#     json_data = jsonpickle.encode(view_costs)
-#     outfile.write(json_data)    
+with open(OUTPUT_FILE_COSTS, "w") as outfile:
+    json_data = jsonpickle.encode(view_costs)
+    outfile.write(json_data)    
 
 rospy.loginfo("Finished view evaluation.")
 rospy.spin()

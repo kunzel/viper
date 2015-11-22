@@ -1,15 +1,24 @@
 <launch>
   <arg name="robot" default="scitos"/>
 
+  <!-- views: DEP or IND -->
+  <arg name="setting" default="DEP"/>  
+  <!-- algorithm: SRC, DRC, SR, DR, SC, DC --> 
+  <arg name="alg" default="SRC"/> 
+  
+  <arg name="num_of_plans" default="1000"/>
+  <!-- <arg name="plan_length" default="25"/> -->
+  <arg name="time_window" default="10"/>
   <arg name="rho" default="1.0"/>
-  <arg name="run" default="0"/>
-  <arg name="scn" default="A"/>
-  <arg name="input_views" default="$(find viper)/data/$(arg robot)/view_keys.json"/>
-  <arg name="input_file" default="$(find viper)/data/$(arg robot)/plans-$(arg scn)-$(arg rho)-$(arg run).json"/>
+
+
+
+  <arg name="input_views" default="$(find viper)/data/op/$(arg robot)/view_keys.json"/>
+  <arg name="input_file" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-Rho$(arg rho).json"/>
   <!-- <arg name="input_file" default="$(find viper)/data/$(arg robot)/plans.json"/> -->
-  <arg name="input_file_values" default="$(find viper)/data/$(arg robot)/view_values.json"/>
-  <arg name="input_file_costs" default="$(find viper)/data/$(arg robot)/view_costs.json"/>
-  <arg name="output_file" default="$(find viper)/data/$(arg robot)/plans-$(arg scn)-$(arg rho)-$(arg run)-VALUES.json"/>
+  <arg name="input_file_values" default="$(find viper)/data/op/$(arg robot)/view_values.json"/>
+  <arg name="input_file_costs" default="$(find viper)/data/op/$(arg robot)/view_costs.json"/>
+  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-Rho$(arg rho)-BEST.json"/>
   <!-- <arg name="output_file" default="$(find viper)/data/$(arg robot)/plan_values.json"/>-->
 
   <include file="$(find viper)/launch/$(arg robot)/_evaluate_plans.launch"/>

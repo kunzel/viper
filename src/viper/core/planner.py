@@ -18,7 +18,8 @@ class Pmf(object):
         self.d[x] = val
 
     def unset(self, x):
-        self.d.pop(x)
+        if x in self.d:
+            self.d.pop(x)
 
     def keys(self):
         return self.d.keys()
@@ -44,6 +45,7 @@ class Pmf(object):
             total += p
             if total >= target:
                 return x
+        return self.keys()[-1]
 
 
 def make_joint(pmf1, pmf2):
@@ -155,12 +157,20 @@ class ViewPlanner(object):
             # update all overlapping views
             # print "UPDATE VIEWS ", key_views_map[k] 
             for v in key_views_map[k]:
-                [keys,values] = view_keys_values[v]
-                key_idx = keys.index(k)
-                del keys[key_idx]
-                del values[key_idx]
-                view_keys_values[v] = [keys,values]
+                # import copy
+                # [keys,values] = copy.deepcopy(view_keys_values[v])
+                # key_idx = keys.index(k)
+                # del keys[key_idx]
+                # del values[key_idx]
+                # view_keys_values[v] = [keys,values]
+                # intersecting_views.append(v)
+                # import copy
+                #   
+                key_idx = view_keys_values[v][0].index(k)
+                view_keys_values[v][0] = [item for i, item in enumerate(view_keys_values[v][0]) if i != key_idx]
+                view_keys_values[v][1] = [item for i, item in enumerate(view_keys_values[v][1]) if i != key_idx ]
                 intersecting_views.append(v)
+
 
         val_sum = 0
         for vid in value_pmf.keys():
@@ -175,10 +185,10 @@ class ViewPlanner(object):
             old = value_pmf.prob(vid)
 
             value_pmf.set(vid, float(val + _lambda) / float(Z))
-            #if vid in intersecting_views:
-            #    print vid, "!!!! NEW VAL", value_pmf.prob(vid), "OLD VAL", old
-            #else:
-            #    print vid, "NEW VAL", value_pmf.prob(vid), "OLD VAL", old
+            # if vid in intersecting_views:
+            #     print vid, "!!!! NEW VAL", value_pmf.prob(vid), "OLD VAL", old
+            # else:
+            #     print vid, "NEW VAL", value_pmf.prob(vid), "OLD VAL", old
         
         #value_pmf.normalize()
         return value_pmf
@@ -188,9 +198,9 @@ class ViewPlanner(object):
         plans = []
         for i in range(0, num_of_plans):
             print "Sample plan ", i
-            plan = self.sample_plan(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
+            plan = self.sample_plan_DEP_src(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
             v_start = view_start.ID
-            print "Cost: ", self.calc_plan_cost(plan, view_costs, v_start), "Length: ", len(plan.views)
+            print "Length: ", len(plan.views), "Cost: ", plan.cost, "Reward: ", plan.reward 
             plans.append(plan)
         return plans
 
@@ -214,7 +224,7 @@ class ViewPlanner(object):
 
         A_sorted = sorted(A, reverse=True)
         f = len(A_sorted)
-        k = min(l,f)
+        k = f # min(l,f)
 
         pmf = Pmf()
         for i in range(0,k):
@@ -226,7 +236,9 @@ class ViewPlanner(object):
         v_start = view_start.ID
         v_end = view_end.ID
         while len(remaining_views) > 0:
+            #print pmf.d
             x = pmf.random()
+            #print x
             plan.append(remaining_views[x])
             # check whether node can be added OR we have to go to v_end (at the moment the starting node)
             current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
@@ -235,6 +247,7 @@ class ViewPlanner(object):
                 plan.pop() # remove the
                 #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
                 plan.append(view_end)
+                plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
                 return plan
 
             remaining_views.pop(x)
@@ -246,7 +259,7 @@ class ViewPlanner(object):
 
             A_sorted = sorted(A, reverse=True)
             f = len(A_sorted)
-            k = min(l,f)
+            k = f # min(l,f)
 
             pmf = Pmf()
             for i in range(0,k):
@@ -256,8 +269,259 @@ class ViewPlanner(object):
             pmf.normalize()            
         return plan
 
+    def sample_plan_IND_src(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+
+        plan = Plan(plan_id)
+        plan.append(view_start)
+        # pmf for values
+        # DETERMINE PMF based on the values of keys
+        view_keys_values = dict()
+        key_views_map = dict()
+        dep_value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+
+        value_pmf = self._generate_value_pmf(view_values)
+        
+        # TODO: fix unset function, should work even ID is not in the list
+        value_pmf.unset(view_start.ID)
+        value_pmf.unset(view_end.ID)
+        value_pmf.normalize()
+        
+        # pmf for costs
+        cost_pmf = self._generate_cost_pmf(view_start.ID, remaining_views.keys(), rho, view_costs)
+        # joint dist
+        joint = make_joint(value_pmf, cost_pmf)
+        joint.normalize()
+
+        v_start = view_start.ID
+        v_end = view_end.ID
+        while len(remaining_views) > 0:
+            x = joint.random()
+            plan.append(remaining_views[x])
+            # check whether node can be added OR we have to go to v_end (at the moment the starting node)
+            current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
+            if current_cost > float(time_window):
+                #print "Cost > time_window: ", self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end]
+                plan.pop() # remove x
+                #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
+                plan.append(view_end)
+                plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
+                return plan
+
+            remaining_views.pop(x)
+            plan.reward += sum(view_keys_values[x][1])
+            plan.ind_reward += view_values[x]
+                                        
+            # sample without replacement
+            # adapt both pmfs: value and cost
+            dep_value_pmf = self._update_dependent_value_pmf(x, dep_value_pmf, view_keys_values, key_views_map)
+            value_pmf.unset(x)
+            value_pmf.normalize()
+            
+            cost_pmf = self._generate_cost_pmf(x, remaining_views.keys(), rho, view_costs)
+            # re-generate joint dist
+            joint = make_joint(value_pmf, cost_pmf)
+            joint.normalize()
+        return plan
     
-    def sample_plan(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+    def sample_plan_DEP_src(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+        #del remaining_views[view_end.ID]
+        #del view_values[view_end.ID]
+         # current_view_id = remaining_views.keys()[0] NOW FUNCTION ARGUMENT
+
+        reward = 0
+        keys = dict()
+        plan = Plan(plan_id)
+        plan.append(view_start)
+        # pmf for values
+        # DETERMINE PMF based on the values of keys
+        view_keys_values = dict()
+        key_views_map = dict()
+        value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+        #value_pmf = self._generate_value_pmf(view_values)
+        
+        # TODO: fix unset function, should work even ID is not in the list
+        #value_pmf.unset(view_start.ID)
+        #value_pmf.unset(view_end.ID)
+        value_pmf.normalize()
+        
+        # pmf for costs
+        cost_pmf = self._generate_cost_pmf(view_start.ID, remaining_views.keys(), rho, view_costs)
+        # joint dist
+        joint = make_joint(value_pmf, cost_pmf)
+        joint.normalize()
+
+        v_start = view_start.ID
+        v_end = view_end.ID
+        while len(remaining_views) > 0:
+            x = joint.random()
+            plan.append(remaining_views[x])
+            # check whether node can be added OR we have to go to v_end (at the moment the starting node)
+            current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
+            if current_cost > float(time_window):
+                #print "Cost > time_window: ", self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end]
+                plan.pop() # remove x
+                #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
+                plan.append(view_end)
+                plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
+                return plan
+
+            #print "SELECTED", x, view_keys_values[x][0]
+            remaining_views.pop(x)
+            for k in view_keys_values[x][0]:
+                if k not in keys:
+                    keys[k] = True
+                    reward += 1
+                else:
+                    print "FATAL ERROR: VID", x, "key", k, key_views_map[k]
+
+            plan.reward += sum(view_keys_values[x][1])
+            if reward != plan.reward:
+                print "FATAL ERROR: reward", reward, "plan.reward", plan.reward
+            # sample without replacement
+            # adapt both pmfs: value and cost
+
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
+
+            #value_pmf.unset(x)
+            #value_pmf.normalize()
+            
+            cost_pmf = self._generate_cost_pmf(x, remaining_views.keys(), rho, view_costs)
+            # re-generate joint dist
+            joint = make_joint(value_pmf, cost_pmf)
+            joint.normalize()
+        return plan
+
+    def sample_plan_DEP_sc(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+        #del remaining_views[view_end.ID]
+        #del view_values[view_end.ID]
+         # current_view_id = remaining_views.keys()[0] NOW FUNCTION ARGUMENT
+
+        plan = Plan(plan_id)
+        plan.append(view_start)
+        # pmf for values
+        # DETERMINE PMF based on the values of keys
+        view_keys_values = dict()
+        key_views_map = dict()
+        value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+        #value_pmf = self._generate_value_pmf(view_values)
+        
+        # TODO: fix unset function, should work even ID is not in the list
+        #value_pmf.unset(view_start.ID)
+        #value_pmf.unset(view_end.ID)
+        #value_pmf.normalize()
+        
+        # pmf for costs
+        cost_pmf = self._generate_cost_pmf(view_start.ID, remaining_views.keys(), rho, view_costs)
+        # joint dist
+        joint = cost_pmf #make_joint(value_pmf, cost_pmf)
+        joint.normalize()
+
+        v_start = view_start.ID
+        v_end = view_end.ID
+        while len(remaining_views) > 0:
+            x = joint.random()
+            plan.append(remaining_views[x])
+            # check whether node can be added OR we have to go to v_end (at the moment the starting node)
+            current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
+            if current_cost > float(time_window):
+                #print "Cost > time_window: ", self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end]
+                plan.pop() # remove x
+                #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
+                plan.append(view_end)
+                plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
+                return plan
+
+            remaining_views.pop(x)
+            plan.reward += sum(view_keys_values[x][1])
+
+            # sample without replacement
+            # adapt both pmfs: value and cost
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
+            #value_pmf.unset(x)
+            #value_pmf.normalize()
+            
+            cost_pmf = self._generate_cost_pmf(x, remaining_views.keys(), rho, view_costs)
+            # re-generate joint dist
+            joint = cost_pmf #make_joint(value_pmf, cost_pmf)
+            joint.normalize()
+        return plan
+
+    def sample_plan_DEP_sr(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+        #del remaining_views[view_end.ID]
+        #del view_values[view_end.ID]
+         # current_view_id = remaining_views.keys()[0] NOW FUNCTION ARGUMENT
+
+        plan = Plan(plan_id)
+        plan.append(view_start)
+        # pmf for values
+        # DETERMINE PMF based on the values of keys
+        view_keys_values = dict()
+        key_views_map = dict()
+        value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+        #value_pmf = self._generate_value_pmf(view_values)
+        
+        # TODO: fix unset function, should work even ID is not in the list
+        #value_pmf.unset(view_start.ID)
+        #value_pmf.unset(view_end.ID)
+        value_pmf.normalize()
+        
+        # pmf for costs
+        #cost_pmf = self._generate_cost_pmf(view_start.ID, remaining_views.keys(), rho, view_costs)
+        # joint dist
+        joint = value_pmf #make_joint(value_pmf, cost_pmf)
+        joint.normalize()
+
+        v_start = view_start.ID
+        v_end = view_end.ID
+        while len(remaining_views) > 0:
+            x = joint.random()
+            plan.append(remaining_views[x])
+            # check whether node can be added OR we have to go to v_end (at the moment the starting node)
+            current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
+            if current_cost > float(time_window):
+                #print "Cost > time_window: ", self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end]
+                plan.pop() # remove x
+                #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
+                plan.append(view_end)
+                plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
+                return plan
+
+            remaining_views.pop(x)
+            plan.reward += sum(view_keys_values[x][1])
+
+            # sample without replacement
+            # adapt both pmfs: value and cost
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
+            #value_pmf.unset(x)
+            #value_pmf.normalize()
+            
+            #cost_pmf = self._generate_cost_pmf(x, remaining_views.keys(), rho, view_costs)
+            # re-generate joint dist
+            joint = value_pmf #make_joint(value_pmf, cost_pmf)
+            joint.normalize()
+        return plan
+
+    def sample_plan_DEP_drc(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
         remaining_views = dict()
         for v in views:
             if v.ID != view_start.ID and v.ID != view_end.ID: 
@@ -296,17 +560,18 @@ class ViewPlanner(object):
             current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
             if current_cost > float(time_window):
                 #print "Cost > time_window: ", self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end]
-                plan.pop() # remove the
+                plan.pop() # remove x
                 #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
                 plan.append(view_end)
+                plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
                 return plan
 
             remaining_views.pop(x)
+            plan.reward += sum(view_keys_values[x][1])
 
             # sample without replacement
             # adapt both pmfs: value and cost
-
-            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
             #value_pmf.unset(x)
             #value_pmf.normalize()
             
@@ -315,7 +580,7 @@ class ViewPlanner(object):
             joint = make_joint(value_pmf, cost_pmf)
             joint.normalize()
         return plan
-
+        
     def calc_plan_cost(self, plan, view_costs, v_start_id):
         cost = 0
         #cost += view_costs[v_start_id][plan.views[0].ID]
