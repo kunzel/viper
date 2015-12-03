@@ -199,13 +199,133 @@ class ViewPlanner(object):
         plans = []
         for i in range(0, num_of_plans):
             print "Sample plan ", i
-            plan = self.baseline_greedy_selection_plus_tsp(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
+            plan = self.sample_plan_IND_src(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
             v_start = view_start.ID
             print "Length: ", len(plan.views), "Cost: ", plan.cost, "Reward: ", plan.reward 
             plans.append(plan)
         return plans
 
-    def baseline_greedy_selection_plus_tsp(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+
+    def baseline_DEP_all_greedy_tsp(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+
+        n = 1
+        old_cost = 0
+        old_plan = Plan(plan_id)
+        #if n == n:
+        while n < len(views_sorted):
+
+            considered_views = [view_start.ID] + remaining_views.keys()
+
+            print views_sorted[:n]
+            print considered_views
+            
+            (tmp_cost, tmp_plan) = self.solve_tsp_greedy(plan_id, considered_views, views, view_values, view_costs, view_start, view_end) 
+            print "RETURNED", tmp_cost, len(tmp_plan.views)
+            
+            if tmp_cost > float(time_window):
+                return old_plan
+            else:
+                (old_cost, old_plan) = (tmp_cost, tmp_plan)
+            # consider one view more 
+            n += 1
+
+        # No plan was found for time_window! Return plan with v_start/v_end: here the same
+        return old_plan
+
+    def baseline_DEP_greedy_tsp(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+        view_keys_values = dict()
+        key_views_map = dict()
+        value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+
+        A = list()
+        while remaining_views:
+            x = max(value_pmf.d, key=value_pmf.d.get)# select best view
+            A.append(x)
+            remaining_views.pop(x)
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
+            
+        views_sorted = A
+
+        n = 1
+        old_cost = 0
+        old_plan = Plan(plan_id)
+        #if n == n:
+        while n < len(views_sorted):
+
+            considered_views = [view_start.ID] + views_sorted[:n] # consider only the best n views 
+
+            print views_sorted[:n]
+            print considered_views
+            
+            (tmp_cost, tmp_plan) = self.solve_tsp_greedy(plan_id, considered_views, views, view_values, view_costs, view_start, view_end) 
+            print "RETURNED", tmp_cost, len(tmp_plan.views)
+            
+            if tmp_cost > float(time_window):
+                return old_plan
+            else:
+                (old_cost, old_plan) = (tmp_cost, tmp_plan)
+            # consider one view more 
+            n += 1
+
+        # No plan was found for time_window! Return plan with v_start/v_end: here the same
+        return old_plan
+
+        
+        
+    def baseline_DEP_tsp(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+        view_keys_values = dict()
+        key_views_map = dict()
+        value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+
+        A = list()
+        while remaining_views:
+            x = max(value_pmf.d, key=value_pmf.d.get)# select best view
+            A.append(x)
+            remaining_views.pop(x)
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
+            
+        views_sorted = A
+
+        n = 1
+        old_cost = 0
+        old_plan = Plan(plan_id)
+        #if n == n:
+        while n < len(views_sorted):
+
+            considered_views = [view_start.ID] + views_sorted[:n] # consider only the best n views 
+
+            print views_sorted[:n]
+            print considered_views
+            
+            (tmp_cost, tmp_plan) = self.solve_tsp(plan_id, considered_views, views, view_values, view_costs, view_start, view_end) 
+            print "RETURNED", tmp_cost, len(tmp_plan.views)
+            
+            if tmp_cost > float(time_window):
+                return old_plan
+            else:
+                (old_cost, old_plan) = (tmp_cost, tmp_plan)
+            # consider one view more 
+            n += 1
+
+        # No plan was found for time_window! Return plan with v_start/v_end: here the same
+        return old_plan
+        
+    def baseline_IND_tsp(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
     
         remaining_views = dict()
         for v in views:
@@ -219,11 +339,11 @@ class ViewPlanner(object):
         A_sorted = sorted(A, reverse=True)
         views_sorted = [v for (val,v) in A_sorted]
 
-        n = 5
+        n = 1
         old_cost = 0
         old_plan = Plan(plan_id)
-        if n == n:
-        #while n < 2:#len(A_sorted):
+        #if n == n:
+        while n < len(A_sorted):
 
             considered_views = [view_start.ID] + views_sorted[:n] # consider only the best n views 
 
@@ -243,6 +363,42 @@ class ViewPlanner(object):
         # No plan was found for time_window! Return plan with v_start/v_end: here the same
         return old_plan
 
+    def solve_tsp_greedy(self, plan_id, considered_views, views, view_values, view_costs, view_start, view_end):
+
+        # for all considered views
+        # find the next best view greedily
+        # and add it to the path
+        
+        plan = Plan(plan_id)
+        plan.append(view_start)
+        current_view_ID = view_start.ID
+        considered_views.pop(considered_views.index(view_start.ID))
+
+        cost = 0 
+        while len(considered_views) > 0:
+            # find best next view
+            import sys
+            min_cost = sys.float_info.max
+            view_id = None
+            for v in considered_views:
+                if view_costs[current_view_ID][v] < min_cost:
+                    min_cost =  view_costs[current_view_ID][v]
+                    view_id = v
+                    
+            for v in views:
+                if view_id == v.ID:
+                    plan.append(v)
+                    considered_views.pop(considered_views.index(view_id))
+                    cost += min_cost
+
+        last_view_ID = plan.views[-1].ID
+        plan.append(view_end)
+        plan.cost = cost + view_costs[last_view_ID][view_end.ID]
+        # print "Plan:"
+        # for v in plan.views:
+        #     print v.ID
+	return (plan.cost, plan)
+        
     def solve_tsp(self, plan_id, considered_views, views, view_values, view_costs, view_start, view_end):
         tour = []
         vid = ['XXX'] + considered_views
@@ -312,9 +468,8 @@ class ViewPlanner(object):
             subs = [i for i in range(1, numViews + 1) if i not in minJs]
 
         rtour = list(reversed(tour))
-
+        print "TOUR:", rtour
         # VERIFY TOUR COSTS!!!
-        # print "TOUR:", rtour
         # for i in range(0,len(rtour)-1):
         #     cost += view_costs[vid[rtour[i]]][vid[rtour[i+1]]]
         # print "COST:", cost
@@ -328,6 +483,7 @@ class ViewPlanner(object):
                 if view_id == v.ID:
                     plan.append(v)
         plan.append(view_end)
+        plan.cost = minTour
 	return (minTour, plan)
         
         
@@ -444,7 +600,9 @@ class ViewPlanner(object):
                                         
             # sample without replacement
             # adapt both pmfs: value and cost
+
             dep_value_pmf = self._update_dependent_value_pmf(x, dep_value_pmf, view_keys_values, key_views_map)
+
             value_pmf.unset(x)
             value_pmf.normalize()
             

@@ -12,7 +12,7 @@
   <arg name="input_file" default="$(find viper)/data/op/$(arg robot)/view_keys.json"/>
   <arg name="input_file_values" default="$(find viper)/data/op/$(arg robot)/view_values.json"/>
   <arg name="input_file_costs" default="$(find viper)/data/op/$(arg robot)/view_costs.json"/>
-
+b
 
   <!-- <arg name="run" default="123"/>-->
   <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-Rho$(arg rho).json"/>
