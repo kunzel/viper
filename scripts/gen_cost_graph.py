@@ -69,6 +69,8 @@ for rho in rhos:
 
 max_view = max(keys)
 # example data
+
+
 x =  np.arange(0.0, max_view+2, 1.0)
 
 y_rho_00 = np.array(means['0.0'])

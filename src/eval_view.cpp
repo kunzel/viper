@@ -19,6 +19,7 @@ using octomap_msgs::GetOctomap;
 #include <tf/LinearMath/Quaternion.h>
 
 #include <viper/ViewValue.h>
+#include <viper/GetKeys.h>
 
 #include "frustum.cpp"
 
@@ -279,6 +280,64 @@ std::vector<geometry_msgs::Point> get_points(Frustum f)
 }
 
 
+// Callback function for the service 'get_keys'
+bool get_keys(viper::GetKeys::Request  &req,
+              viper::GetKeys::Response &res)
+{
+  
+  ROS_INFO("Received service request: get_keys");
+
+  //OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
+
+  /* NOTE: USE IT WHEN ON ROBOT, BUT NOT FOR BATCH EVALUATION 
+  AbstractOcTree* tree = octomap_msgs::fullMsgToMap(req.octomap);
+  if (!tree){
+    ROS_ERROR("Failed to recreate octomap");
+    return false;
+  }
+
+  OcTree* octree = dynamic_cast<OcTree*>(tree);
+  
+  if (octree){
+    ROS_INFO("Map received (%zu nodes, %f m res)", octree->size(), octree->getResolution());
+    input_tree = extract_supporting_planes(octree);
+  } else{
+    ROS_ERROR("No map received!");
+    input_tree = NULL;
+  }
+  */
+  
+  if (input_tree == NULL)
+    return false;
+
+  for(OcTree::leaf_iterator it = input_tree->begin_leafs(),
+        end=input_tree->end_leafs(); it!= end; ++it)
+    {
+      if (input_tree->isNodeOccupied(*it))
+        {
+          int size = (int) (it.getSize() / input_tree->getResolution());
+          double x = it.getX();
+          double y = it.getY();
+          double z = it.getZ();
+          Vec3 point(x, y, z);
+
+          int WEIGHT = 1; // compute weight from QSR model
+          int node_value = WEIGHT * size;
+          const OcTreeKey key = it.getKey();
+          OcTreeKey::KeyHash computeHash;
+          unsigned short int hash = computeHash(key);
+          res.keys.push_back(hash);
+          res.values.push_back(node_value);
+        }
+    }
+
+  ROS_INFO("KEYS SIZE: %i", res.keys.size());
+  ROS_INFO("VALUES SIZE: %i", res.values.size());
+  ROS_INFO("Finished service request.");
+  return true;
+}
+
+
 // Callback function for the service 'view_eval'
 bool view_eval(viper::ViewValue::Request  &req,
                viper::ViewValue::Response &res)
@@ -324,7 +383,7 @@ bool view_eval(viper::ViewValue::Request  &req,
 
 int main (int argc, char** argv)
 {
-  ros::init (argc, argv, "evaluate_view");
+  ros::init (argc, argv, "evaluate_view_and_get_keys");
   ros::NodeHandle node; 
 
   //node.getParam("frustum_near", frustum_near);
@@ -334,11 +393,14 @@ int main (int argc, char** argv)
   input_tree = retrieve_octree();  
   
   ros::ServiceServer view_eval_service = node.advertiseService("view_eval", view_eval);
-
-
   ROS_INFO("Started view evaluation service");
+
+  ros::ServiceServer get_keys_service = node.advertiseService("get_keys", get_keys);
+  ROS_INFO("Started octomap get-keys service");
+
   ros::spin();
   ROS_INFO("Stopped view evaluation service");
+  ROS_INFO("Stopped octomap get-keys service");
   return 0;
 }
 

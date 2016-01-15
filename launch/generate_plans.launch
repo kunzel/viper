@@ -4,6 +4,8 @@
   <arg name="setting" default="IND"/>  
   <!-- algorithm: SRC, DRC, SR, DR, SC, DC --> 
   <arg name="alg" default="SRC"/> 
+
+  <arg name="run" default="0"/> 
  
   <arg name="num_of_plans" default="2000"/>
   <!-- <arg name="plan_length" default="25"/> -->
@@ -15,9 +17,9 @@
 b
 
   <!-- <arg name="run" default="123"/>-->
-  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-Rho$(arg rho).json"/>
+  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-Rho$(arg rho)-Run$(arg run).json"/>
 
-  <arg name="output_file_best" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-Rho$(arg rho)-BEST.json"/>
+  <arg name="output_file_best" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-Rho$(arg rho)-Run$(arg run)-BEST.json"/>
 
 
   <include file="$(find viper)/launch/$(arg robot)/_generate_plans.launch"/>

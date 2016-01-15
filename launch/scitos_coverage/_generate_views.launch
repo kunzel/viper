@@ -20,4 +20,6 @@
   <include file="$(find nav_goals_generator)/launch/nav_goals_generator.launch">
     <arg name="map" value="$(arg map)"/>
   </include>
+
+  <node name="evaluate_view" pkg="viper" type="eval_view" output="screen"/>
 </launch>

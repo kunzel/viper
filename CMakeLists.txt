@@ -64,6 +64,7 @@ add_service_files(
    FILES
    PTU_FK.srv
    ViewValue.srv
+   GetKeys.srv
 )
 
 ## Generate actions in the 'action' folder

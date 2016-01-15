@@ -209,6 +209,62 @@ def b_func(x):
     return value
 
 
+def hist(views):
+    max_val = 0
+    data = []
+    h = dict()
+    for v in views:
+        val = sum(v.get_values())
+        data.append(val)
+        if val not in h:
+            h[val] = 0
+        h[val] +=1
+        if val > max_val:
+            max_val = val
+
+    # data = [0] * (max_val+1)
+    # for val in h.keys():
+    #     data[val] = h[val]
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    import matplotlib.path as path
+
+    fig, ax = plt.subplots()
+    
+    # histogram our data with numpy
+    #data = np.random.randn(1000)
+    n, bins = np.histogram(data, len(data))
+    
+    # get the corners of the rectangles for the histogram
+    left = np.array(bins[:-1])
+    right = np.array(bins[1:])
+    bottom = np.zeros(len(left))
+    top = bottom + n
+
+
+    # we need a (numrects x numsides x 2) numpy array for the path helper
+    # function to build a compound path
+    XY = np.array([[left, left, right, right], [bottom, top, top, bottom]]).T
+    
+    # get the Path object
+    barpath = path.Path.make_compound_path_from_polys(XY)
+    
+    # make a patch out of it
+    patch = patches.PathPatch(
+        barpath, facecolor='blue', edgecolor='gray', alpha=0.8)
+    ax.add_patch(patch)
+
+    # update the view limits
+    ax.set_xlim(left[0], right[-1])
+    ax.set_ylim(bottom.min(), top.max())
+
+    plt.show()
+
+    
+
+    
 
 vis = Vis()
 robot_poses_pub = rospy.Publisher('robot_poses', PoseArray)
@@ -233,24 +289,89 @@ from octomap_msgs.msg import Octomap
 from octomap_msgs.srv import GetOctomap, GetOctomapRequest
 
 octomap = Octomap()
-# #octomap_service_name = '/Semantic_map_publisher_node/SemanticMapPublisher/ObservationOctomapService'
-# rospy.loginfo("Waiting for octomap service")
-# octomap_service_name = '/octomap_full'
-# rospy.wait_for_service(octomap_service_name)
-# rospy.loginfo("Done")
-# try:
-#     octomap_service = rospy.ServiceProxy(octomap_service_name, GetOctomap)
-#     req = GetOctomapRequest()
-#     rospy.loginfo("Requesting octomap from semantic map service")
-#     res = octomap_service(req)
-#     octomap = res.map
-#     rospy.loginfo("Received octomap: size:%s resolution:%s", len(octomap.data), octomap.resolution)
+# # #octomap_service_name = '/Semantic_map_publisher_node/SemanticMapPublisher/ObservationOctomapService'
+# # rospy.loginfo("Waiting for octomap service")
+# # octomap_service_name = '/octomap_full'
+# # rospy.wait_for_service(octomap_service_name)
+# # rospy.loginfo("Done")
+# # try:
+# #     octomap_service = rospy.ServiceProxy(octomap_service_name, GetOctomap)
+# #     req = GetOctomapRequest()
+# #     rospy.loginfo("Requesting octomap from semantic map service")
+# #     res = octomap_service(req)
+# #     octomap = res.map
+# #     rospy.loginfo("Received octomap: size:%s resolution:%s", len(octomap.data), octomap.resolution)
 
-# except rospy.ServiceException, e:
-#     rospy.logerr("Service call failed: %s"%e)
+# # except rospy.ServiceException, e:
+# #     rospy.logerr("Service call failed: %s"%e)
 
-planner = ViewPlanner(robot)
-view_values = planner.compute_view_values(views, octomap)
+from viper.srv import GetKeys, GetKeysRequest
+rospy.loginfo("Waiting for octomap get-keys service")
+service_name = '/get_keys'
+rospy.wait_for_service(service_name)
+rospy.loginfo("Done")
+try:
+    service = rospy.ServiceProxy(service_name, GetKeys)
+    req = GetKeysRequest()
+    req.octomap = octomap
+    rospy.loginfo("Requesting keys from octomap get-keys service")
+    res = service(req)
+    octomap_keys = res.keys
+    rospy.loginfo("Received octomap_keys: size:%s", len(octomap_keys))
+    #print "OCTOMAP KEYS", octomap_keys
+    
+except rospy.ServiceException, e:
+    rospy.logerr("Service call failed: %s"%e)
+
+
+#hist(views)
+# FILTER VIEWS
+
+covered_keys = dict() 
+for v in views:
+    for k in v.get_keys():
+        if k not in covered_keys:
+            covered_keys[k] = 0
+        covered_keys[k] += v.get_values()[v.get_keys().index(k)]
+
+coverage = float(len(covered_keys.keys()))/float(len(octomap_keys))
+min_coverage = 0.95
+x = 0
+covered_keys = dict()
+filtered_views = []
+while coverage > min_coverage:
+    old_covered_keys = covered_keys
+    covered_keys = dict()
+    old_filtered_views = filtered_views
+    filtered_views = []
+    for v in views:
+        val = sum(v.get_values()) 
+        if  val > x:
+            filtered_views.append(v)
+            for k in v.get_keys():
+                if k not in covered_keys:
+                    covered_keys[k] = 0
+                covered_keys[k] += v.get_values()[v.get_keys().index(k)]
+    x += 1
+    coverage =  float(len(covered_keys.keys()))/float(len(octomap_keys))
+    
+print "#FILTERED VIEWS:", len(old_filtered_views), "Coverage: ", float(len(old_covered_keys.keys()))/float(len(octomap_keys)), "(Views with values 0<=value<=X have been filtered out) X:", x-1  
+
+hist(old_filtered_views)
+
+# save unfiltered views
+with open(INPUT_FILE + "-UNFILTERED", "w") as outfile:
+    json_data = jsonpickle.encode(views)
+    outfile.write(json_data)
+
+views = old_filtered_views
+
+view_values = dict()
+for v in views:
+    value = sum(v.get_values())
+    view_values[v.ID] = value
+# planner = ViewPlanner(robot)
+# view_values = planner.compute_view_values(views, octomap)
 
 robot_poses  = PoseArray()
 robot_poses.header.frame_id = '/map'
@@ -259,7 +380,12 @@ for v in views:
     robot_poses.poses.append(v.get_ptu_pose())
 robot_poses_pub.publish(robot_poses)
 
-view_costs = planner.compute_view_costs(views)
+
+#### COSTS #######################################
+
+# view_costs = planner.compute_view_costs(views)
+
+#################################################
 
 # triangle marker
 markerArray = MarkerArray()    
@@ -302,6 +428,10 @@ vis.pubfrustum.publish(frustum_marker)
 #     i += 1
 # vis.pubcost.publish(cost_marker)
 
+
+with open(INPUT_FILE + "-FILTERED", "w") as outfile:
+    json_data = jsonpickle.encode(views)
+    outfile.write(json_data)
        
 with open(OUTPUT_FILE_VALUES, "w") as outfile:
     json_data = jsonpickle.encode(view_values)
@@ -311,9 +441,9 @@ with open(OUTPUT_FILE_VIEW_KEYS, "w") as outfile:
     json_data = jsonpickle.encode(views)
     outfile.write(json_data)
 
-with open(OUTPUT_FILE_COSTS, "w") as outfile:
-    json_data = jsonpickle.encode(view_costs)
-    outfile.write(json_data)    
+# with open(OUTPUT_FILE_COSTS, "w") as outfile:
+#     json_data = jsonpickle.encode(view_costs)
+#     outfile.write(json_data)    
 
 rospy.loginfo("Finished view evaluation.")
 rospy.spin()

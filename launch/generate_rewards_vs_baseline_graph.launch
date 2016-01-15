@@ -1,0 +1,10 @@
+<launch>
+  <arg name="robot" default="scitos"/>
+  <arg name="input_file_dir" default="$(find viper)/data/op/$(arg robot)/plans/"/>
+  <arg name="time_window" default="20"/>
+
+  <node name="generate_rewards_vs_baseline" pkg="viper" type="gen_rewards_vs_baseline.py" output="screen">
+    <param name="input_file_dir" type="string" value="$(arg input_file_dir)"/>
+    <param name="time_window" type="string" value="$(arg time_window)"/>
+  </node>
+</launch>

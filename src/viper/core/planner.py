@@ -62,6 +62,40 @@ class ViewPlanner(object):
     def __init__(self,robot):
         self._robot = robot 
 
+    def sample_views_coverage(self, max_num_of_views, min_coverage, octomap, octomap_keys):
+        
+        # init
+        views = []
+        coverage = float(0) / len(octomap_keys) 
+        num_of_views = 0
+        key_val = dict()
+
+        # sample views until ROI is covered
+        while coverage < min_coverage and num_of_views < max_num_of_views:
+            
+            v = self._robot.generate()
+            if v != None:
+                views.append(v)
+            value = self._robot.evaluate(v, octomap)
+            for k in v.get_keys():
+                if k not in key_val:
+                    key_val[k] = v.get_values()[v.get_keys().index(k)]
+
+            # update coverage
+            coverage = float(len(key_val.keys())) / len(octomap_keys)
+            print('-------------------------------------------')
+            print "COVERAGE:", coverage, " #VIEWS:", num_of_views
+            print('-------------------------------------------')
+            num_of_views += 1
+
+        # give warning if max_number of views was exceeded
+        print('===========================================')
+        if num_of_views >= max_num_of_views:
+            print('WARNING: reached maximum number of views!')
+        print('COVERAGE:', coverage)
+        print('===========================================')
+        return views
+        
     def sample_views(self, num_of_views):
         views = []
         for i in range(0,num_of_views):
@@ -199,7 +233,7 @@ class ViewPlanner(object):
         plans = []
         for i in range(0, num_of_plans):
             print "Sample plan ", i
-            plan = self.sample_plan_IND_src(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
+            plan = self.sample_plan_DEP_src_best_M(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
             v_start = view_start.ID
             print "Length: ", len(plan.views), "Cost: ", plan.cost, "Reward: ", plan.reward 
             plans.append(plan)
@@ -684,6 +718,143 @@ class ViewPlanner(object):
             joint = make_joint(value_pmf, cost_pmf)
             joint.normalize()
         return plan
+
+    def sample_plan_DEP_src_best_M(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+        view_keys_values = dict()
+        key_views_map = dict()
+        value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+
+        A = list()
+        while remaining_views:
+            x = max(value_pmf.d, key=value_pmf.d.get)# select best view
+            A.append(x)
+            remaining_views.pop(x)
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
+            
+        views_sorted = A
+
+
+        M = 19
+        considered_views = [view_start.ID] + views_sorted[:M] # consider only the best n views 
+        views_subset = []
+        for cv in considered_views:
+            for v in views:
+                if cv == v.ID:
+                    views_subset.append(v)
+            
+                    
+        (tmp_cost, tmp_plan) = self.sample_plan_DEP_src_best_M2(plan_id, time_window, rho, views_subset, view_values, view_costs, view_start, view_end)
+        print "FOUND PLAN:", tmp_cost, len(tmp_plan.views)
+        return tmp_plan
+
+        # n = 1
+        # old_cost = 0
+        # old_plan = Plan(plan_id)
+        # #if n == n:
+        # while n < len(views_sorted):
+
+        #     considered_views = [view_start.ID] + views_sorted[:n] # consider only the best n views 
+        #     views_subset = []
+        #     for cv in considered_views:
+        #         for v in views:
+        #             if cv == v.ID:
+        #                 views_subset.append(v)
+            
+        #     #print views_sorted[:n]
+        #     #print considered_views
+            
+        #     (tmp_cost, tmp_plan) = self.sample_plan_DEP_src_best_M2(plan_id, time_window, rho, views_subset, view_values, view_costs, view_start, view_end)
+        #     print "RETURNED", tmp_cost, len(tmp_plan.views)
+            
+        #     if tmp_cost > float(time_window):
+        #         return old_plan
+        #     else:
+        #         (old_cost, old_plan) = (tmp_cost, tmp_plan)
+        #     # consider one view more 
+        #     n += 1
+
+        # # No plan was found for time_window! Return plan with v_start/v_end: here the same
+        # return old_plan
+
+
+                
+    def sample_plan_DEP_src_best_M2(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+        #del remaining_views[view_end.ID]
+        #del view_values[view_end.ID]
+         # current_view_id = remaining_views.keys()[0] NOW FUNCTION ARGUMENT
+
+        reward = 0
+        keys = dict()
+        plan = Plan(plan_id)
+        plan.append(view_start)
+        plan.cost = 0
+        # pmf for values
+        # DETERMINE PMF based on the values of keys
+        view_keys_values = dict()
+        key_views_map = dict()
+        value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+        #value_pmf = self._generate_value_pmf(view_values)
+        
+        # TODO: fix unset function, should work even ID is not in the list
+        #value_pmf.unset(view_start.ID)
+        #value_pmf.unset(view_end.ID)
+        value_pmf.normalize()
+        
+        # pmf for costs
+        cost_pmf = self._generate_cost_pmf(view_start.ID, remaining_views.keys(), rho, view_costs)
+        # joint dist
+        joint = make_joint(value_pmf, cost_pmf)
+        joint.normalize()
+
+        v_start = view_start.ID
+        v_end = view_end.ID
+        while len(remaining_views) > 0:
+            x = joint.random()
+            plan.append(remaining_views[x])
+            # check whether node can be added OR we have to go to v_end (at the moment the starting node)
+            current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
+            if current_cost > float(time_window):
+                #print "Cost > time_window: ", self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end]
+                plan.pop() # remove x
+                #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
+                plan.append(view_end)
+                plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
+                return (plan.cost, plan)
+
+            #print "SELECTED", x, view_keys_values[x][0]
+            remaining_views.pop(x)
+            for k in view_keys_values[x][0]:
+                if k not in keys:
+                    keys[k] = True
+                    reward += 1
+                else:
+                    print "FATAL ERROR: VID", x, "key", k, key_views_map[k]
+
+            plan.reward += sum(view_keys_values[x][1])
+            if reward != plan.reward:
+                print "FATAL ERROR: reward", reward, "plan.reward", plan.reward
+            # sample without replacement
+            # adapt both pmfs: value and cost
+
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
+
+            #value_pmf.unset(x)
+            #value_pmf.normalize()
+            
+            cost_pmf = self._generate_cost_pmf(x, remaining_views.keys(), rho, view_costs)
+            # re-generate joint dist
+            joint = make_joint(value_pmf, cost_pmf)
+            joint.normalize()
+        return (plan.cost, plan)
 
     def sample_plan_DEP_sc(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
         remaining_views = dict()
