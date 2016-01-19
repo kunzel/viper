@@ -11,8 +11,8 @@ robot_poses_pub = rospy.Publisher('robot_poses', PoseArray)
 ptu_poses_pub = rospy.Publisher('ptu_poses', PoseArray)
 rospy.init_node('view_generation')
 
-import viper.robots.scitos
-robot = viper.robots.scitos.ScitosRobot()
+import viper.robots.scitos_coverage
+robot = viper.robots.scitos_coverage.ScitosRobot()
 
 NUM_OF_VIEWS = rospy.get_param('~num_of_views', 100)
 FILENAME     = rospy.get_param('~output_file', 'views.json')

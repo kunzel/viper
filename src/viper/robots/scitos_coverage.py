@@ -263,7 +263,7 @@ class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
 
     def __init__(self):
         self.first_call = True
-        self.nav_lin_vel = 0.4
+        self.nav_lin_vel = 0.3
         self.nav_ang_vel = 1.0
         self.ptu_ang_vel = 1.0
 
@@ -322,6 +322,7 @@ class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
             lin_diff = math.sqrt( math.pow(p1.position.x - p2.position.x, 2) +
                                   math.pow(p1.position.y - p2.position.y, 2))
             lin_cost = lin_diff / self.nav_lin_vel
+            
 
             # Version 1 --- not working
             # comput yaw angles and calc difference

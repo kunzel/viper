@@ -271,8 +271,8 @@ robot_poses_pub = rospy.Publisher('robot_poses', PoseArray)
 
 rospy.init_node('view_evaluation')
 
-import viper.robots.scitos
-robot = viper.robots.scitos.ScitosRobot()
+import viper.robots.scitos_coverage
+robot = viper.robots.scitos_coverage.ScitosRobot()
 
 INPUT_FILE = rospy.get_param('~input_file',   'views.json')
 OUTPUT_FILE_COSTS = rospy.get_param('~output_file_costs', 'view_costs.json')
@@ -339,10 +339,11 @@ min_coverage = 0.95
 x = 0
 covered_keys = dict()
 filtered_views = []
+import copy
 while coverage > min_coverage:
-    old_covered_keys = covered_keys
+    old_covered_keys = copy.deepcopy(covered_keys)
     covered_keys = dict()
-    old_filtered_views = filtered_views
+    old_filtered_views = copy.deepcopy(filtered_views)
     filtered_views = []
     for v in views:
         val = sum(v.get_values()) 
@@ -370,20 +371,20 @@ view_values = dict()
 for v in views:
     value = sum(v.get_values())
     view_values[v.ID] = value
-# planner = ViewPlanner(robot)
+planner = ViewPlanner(robot)
 # view_values = planner.compute_view_values(views, octomap)
 
 robot_poses  = PoseArray()
 robot_poses.header.frame_id = '/map'
 robot_poses.poses = []
 for v in views:
-    robot_poses.poses.append(v.get_ptu_pose())
+    robot_poses.poses.append(v.get_robot_pose())
 robot_poses_pub.publish(robot_poses)
 
 
 #### COSTS #######################################
-
-# view_costs = planner.compute_view_costs(views)
+view_costs = []
+view_costs = planner.compute_view_costs(views)
 
 #################################################
 
@@ -441,9 +442,9 @@ with open(OUTPUT_FILE_VIEW_KEYS, "w") as outfile:
     json_data = jsonpickle.encode(views)
     outfile.write(json_data)
 
-# with open(OUTPUT_FILE_COSTS, "w") as outfile:
-#     json_data = jsonpickle.encode(view_costs)
-#     outfile.write(json_data)    
+with open(OUTPUT_FILE_COSTS, "w") as outfile:
+    json_data = jsonpickle.encode(view_costs)
+    outfile.write(json_data)    
 
 rospy.loginfo("Finished view evaluation.")
 rospy.spin()

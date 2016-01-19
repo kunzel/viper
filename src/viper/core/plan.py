@@ -10,6 +10,7 @@ class Plan(object):
         self.reward = 0
         self.ind_reward = 0
         self.cost = 0
+        self.planning_time = 0
 
     def append(self, view):
         self.views.append(view)

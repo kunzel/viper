@@ -1,5 +1,5 @@
 #include <cstdlib>  
-
+#include <algorithm>
 #include <stdlib.h>  
 #include <string>
 #include <math.h>
@@ -119,7 +119,8 @@ int compute_value(Frustum frustum, std::vector<unsigned short int> &keys, std::v
   int free = 0;
   int occupied = 0;
   int WEIGHT = 1; // compute weight from QSR model
-
+  std::vector<unsigned short int> cache;
+  
   if (input_tree == NULL)
     return 0;
 
@@ -143,9 +144,15 @@ int compute_value(Frustum frustum, std::vector<unsigned short int> &keys, std::v
               const OcTreeKey key = it.getKey();
               OcTreeKey::KeyHash computeHash;
               unsigned short int hash = computeHash(key);
-              keys.push_back(hash);
-              node_values.push_back(node_value);
-              value += node_value;
+              
+              // ONLY ADD IF KEY IS NOT CONSIDERED ALREADY
+              if(std::find(keys.begin(), keys.end(), hash) == keys.end()) {
+                /* keys does not contain hash */
+                keys.push_back(hash);
+                node_values.push_back(node_value);
+                value += node_value;
+              } 
+
             }
         }
       else 
@@ -326,8 +333,13 @@ bool get_keys(viper::GetKeys::Request  &req,
           const OcTreeKey key = it.getKey();
           OcTreeKey::KeyHash computeHash;
           unsigned short int hash = computeHash(key);
-          res.keys.push_back(hash);
-          res.values.push_back(node_value);
+
+          // ONLY ADD IF KEY IS NOT IN ALREADY
+          if(std::find(res.keys.begin(), res.keys.end(), hash) == res.keys.end()) {
+            /* res.keys does not contain hash */
+            res.keys.push_back(hash);
+            res.values.push_back(node_value);
+          } 
         }
     }
 

@@ -200,12 +200,16 @@ class ViewPlanner(object):
                 # view_keys_values[v] = [keys,values]
                 # intersecting_views.append(v)
                 # import copy
-                #   
+                #
+                ##print('WHAT IS HAPPENING!?')
+                #print "VIEW -> KEYS VALUES:", view_keys_values
+                #print "KEY  -> VIEWS:", key_views_map
+                #print "V", v, "K", k
                 key_idx = view_keys_values[v][0].index(k)
                 view_keys_values[v][0] = [item for i, item in enumerate(view_keys_values[v][0]) if i != key_idx]
                 view_keys_values[v][1] = [item for i, item in enumerate(view_keys_values[v][1]) if i != key_idx ]
                 intersecting_views.append(v)
-
+                
 
         val_sum = 0
         for vid in value_pmf.keys():
@@ -229,11 +233,53 @@ class ViewPlanner(object):
         return value_pmf
         
         
-    def sample_plans(self, num_of_plans, time_window, rho, views, view_values, view_costs, view_start, view_end):
+    def sample_plans(self, num_of_plans, time_window, rho, best_m, views, view_values, view_costs, view_start, view_end):
+
+        # plans = []
+        # for i in range(0, num_of_plans):
+        #     print "Sample plan ", i
+        #     plan = self.sample_plan_DEP_src_best_M(str(i), time_window, rho, best_m, views, view_values, view_costs, view_start, view_end)
+
+                        
+        #     v_start = view_start.ID
+        #     print "Length: ", len(plan.views), "Cost: ", plan.cost, "Reward: ", plan.reward 
+        #     plans.append(tmp_plan)
+        # return plans
+
+        remaining_views = dict()
+        for v in views:
+            if v.ID != view_start.ID and v.ID != view_end.ID: 
+                remaining_views[v.ID] = v
+
+        view_keys_values = dict()
+        key_views_map = dict()
+        value_pmf = self._generate_dependent_value_pmf(views, view_keys_values, key_views_map)
+
+        A = list()
+        while remaining_views:
+            x = max(value_pmf.d, key=value_pmf.d.get)# select best view
+            A.append(x)
+            remaining_views.pop(x)
+            value_pmf = self._update_dependent_value_pmf(x, value_pmf, view_keys_values, key_views_map)
+        views_sorted = A
+        M = best_m
+        considered_views = [view_start.ID] + views_sorted[:M] # consider only the best n views 
+        views_subset = []
+        for cv in considered_views:
+            for v in views:
+                if cv == v.ID:
+                    views_subset.append(v)
+                    
+
         plans = []
         for i in range(0, num_of_plans):
             print "Sample plan ", i
-            plan = self.sample_plan_DEP_src_best_M(str(i), time_window, rho, views, view_values, view_costs, view_start, view_end)
+
+            #plan = self.sample_plan_DEP_src_best_M(str(i), time_window, rho, best_m, views, view_values, view_costs, view_start, view_end)
+
+            (tmp_cost, plan) = self.sample_plan_DEP_src_best_M2(str(i), time_window, rho, views_subset, view_values, view_costs, view_start, view_end)
+            print "FOUND PLAN:", tmp_cost, len(plan.views)
+                        
             v_start = view_start.ID
             print "Length: ", len(plan.views), "Cost: ", plan.cost, "Reward: ", plan.reward 
             plans.append(plan)
@@ -719,7 +765,7 @@ class ViewPlanner(object):
             joint.normalize()
         return plan
 
-    def sample_plan_DEP_src_best_M(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+    def sample_plan_DEP_src_best_M(self, plan_id, time_window, rho, best_m, views, view_values, view_costs, view_start, view_end):
         remaining_views = dict()
         for v in views:
             if v.ID != view_start.ID and v.ID != view_end.ID: 
@@ -739,14 +785,13 @@ class ViewPlanner(object):
         views_sorted = A
 
 
-        M = 19
+        M = best_m
         considered_views = [view_start.ID] + views_sorted[:M] # consider only the best n views 
         views_subset = []
         for cv in considered_views:
             for v in views:
                 if cv == v.ID:
                     views_subset.append(v)
-            
                     
         (tmp_cost, tmp_plan) = self.sample_plan_DEP_src_best_M2(plan_id, time_window, rho, views_subset, view_values, view_costs, view_start, view_end)
         print "FOUND PLAN:", tmp_cost, len(tmp_plan.views)

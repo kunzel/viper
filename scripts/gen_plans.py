@@ -9,13 +9,14 @@ from sensor_msgs.msg import JointState
 rospy.init_node('plan_generation')
 rospy.loginfo("Started plan generation.")
 
-import viper.robots.scitos
-robot = viper.robots.scitos.ScitosRobot()
+import viper.robots.scitos_coverage
+robot = viper.robots.scitos_coverage.ScitosRobot()
 
 NUM_OF_PLANS = rospy.get_param('~num_of_plans', 10)
 #PLAN_LENGTH = rospy.get_param('~plan_length', 20)
 TIME_WINDOW = rospy.get_param('~time_window', 120)
 RHO  = rospy.get_param('~rho', 1.0)
+BEST_M  = rospy.get_param('~best_m', 10)
 
 
 INPUT_FILE = rospy.get_param('~input_file', 'view_keys.json')
@@ -34,13 +35,13 @@ view_values = dict()
 with open(INPUT_FILE_VALUES, "r") as input_file:
     json_data = input_file.read()
     view_values = jsonpickle.decode(json_data)
-    rospy.loginfo("Loaded view values")
+    rospy.loginfo("Loaded view values %s",len(view_values))
 
 view_costs = dict()
 with open(INPUT_FILE_COSTS, "r") as input_file:
     json_data = input_file.read()
     view_costs = jsonpickle.decode(json_data)
-    rospy.loginfo("Loaded view costs")
+    rospy.loginfo("Loaded view costs %s",len(view_costs))
 
 planner = ViewPlanner(robot)
 
@@ -63,7 +64,7 @@ rospy.loginfo("Current pose: %s" % current_pose)
 current_ptu_state = JointState()
 current_ptu_state.name = ['pan', 'tilt']
 current_ptu_state.position = [jointstate_msg.position[jointstate_msg.name.index('pan')],jointstate_msg.position[jointstate_msg.name.index('tilt')]]
-current_view =  viper.robots.scitos.ScitosView("-1", current_pose, current_ptu_state, None) # ptu pose is not needed for cost calculation
+current_view =  viper.robots.scitos_coverage.ScitosView("-1", current_pose, current_ptu_state, None) # ptu pose is not needed for cost calculation
 vcosts = dict()
 for v in views:
     cost = robot.cost(current_view,v)
@@ -74,7 +75,14 @@ view_costs[current_view.ID] = vcosts
 view_costs[current_view.ID][current_view.ID] = 0  
 
 rospy.loginfo("Started plan sampling.")
-plans = planner.sample_plans(NUM_OF_PLANS, TIME_WINDOW, RHO, views, view_values, view_costs, current_view, current_view)
+import time
+t_begin = time.time()
+if BEST_M <= 0:
+    BEST_M = len(views)
+plans = planner.sample_plans(NUM_OF_PLANS, TIME_WINDOW, RHO, BEST_M, views, view_values, view_costs, current_view, current_view)
+t_end = time.time()
+planning_time = t_end - t_begin
+rospy.loginfo("--- %s seconds ---" % (planning_time))
 rospy.loginfo("Stopped plan sampling.")
 
 max_id = -1
@@ -87,6 +95,7 @@ for p in plans:
         best_plan = p
 
 for p in plans:
+    p.planning_time = planning_time
     if p.ID == max_id: #min_cost_plan_id:
         print "Best plan: ID: ", p.ID, " Value: ", p.reward #plan_values[p.ID]
 
