@@ -18,6 +18,22 @@ NUM_OF_VIEWS = rospy.get_param('~num_of_views', 100)
 FILENAME     = rospy.get_param('~output_file', 'views.json')
 COVERAGE     = rospy.get_param('~coverage', False)
 
+
+from soma_roi_manager.soma_roi import SOMAROIQuery
+soma_map  = "g4s"
+soma_conf = "ijcai"
+roi_id   = '1'
+soma = SOMAROIQuery(soma_map, soma_conf)
+poly = soma.get_polygon(roi_id)
+
+# set ROI param 
+polygon = []
+for p in poly.points:
+    polygon.append([p.x, p.y])
+rospy.set_param('roi', polygon)
+rospy.loginfo(polygon)
+
+
 planner = ViewPlanner(robot)
 
 rospy.loginfo('Generate views.')

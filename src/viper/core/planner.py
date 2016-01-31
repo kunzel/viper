@@ -866,12 +866,16 @@ class ViewPlanner(object):
             x = joint.random()
             plan.append(remaining_views[x])
             # check whether node can be added OR we have to go to v_end (at the moment the starting node)
-            current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
+            current_cost = self.calc_plan_cost(plan, view_costs, v_start)
+            # !!! NOTE: for now, NOT consider end node
+            #+ view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
             if current_cost > float(time_window):
                 #print "Cost > time_window: ", self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end]
                 plan.pop() # remove x
                 #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
-                plan.append(view_end)
+                # !!! NOTE: for now, NOT consider end node
+                # plan.append(view_end)
+                # !!! NOTE: for now, NOT consider end node
                 plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
                 return (plan.cost, plan)
 

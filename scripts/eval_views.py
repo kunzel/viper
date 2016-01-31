@@ -413,7 +413,7 @@ for view in views:
     idx += 1
 vis.pubfrustum.publish(frustum_marker)
 
-# # cost marker
+# cost marker
 # cost_marker = MarkerArray()    
 # i = 0
 # for view1 in views:

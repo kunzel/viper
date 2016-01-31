@@ -20,8 +20,10 @@ for f in sys.argv[1:]:
                     keys[k] = True
                     reward += 1
 
+            
         print  f, "-- Reward:", reward, "(plan.reward:", plan.reward ,") Cost", plan.cost, "Length:", len(plan.views) #, vids
         #print ""
 
+        
 
 print "Plan analysis finished."

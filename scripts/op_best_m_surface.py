@@ -17,18 +17,24 @@ def cc(arg):
 
 INPUT_FILE_DIR = rospy.get_param('~input_file_dir', '.')
 
+# alg = "IJCAIBESTM"
+# runs = [0]
+# rhos = ['1.0']
+# MAX_REWARD = 2637
+# N = [50] #500
+# TIME = [30, 60, 90, 120, 180, 240]
+# BEST_M = [5,10,15, 20, 30, 40, 50, 165]
+
+
+alg = "FINALBESTM"
 runs = [0]
 rhos = ['1.0']
 MAX_REWARD = 2637
-N = [50] #500
-TIME = [30, 60, 90, 120, 180, 240]
-BEST_M = [5,10,15, 20, 30, 40, 50, 165]
+N = [50, 100, 250, 500, 1000, 2000 ] #500
+TIME = [30, 45, 60, 90, 120, 150]
+BEST_M = [5, 10, 15, 20, 30, 50, 100, 125, 165]
 
-    # for N in 50 100 500 1000  
-    # do
-    #     for TIME in 60 120 180 240 
-    #     do
-    #         for BEST_M in 20 30 40 50 
+
 
 run_stats = dict()
 for run in runs:
@@ -36,11 +42,11 @@ for run in runs:
         for n in N:
             for m in BEST_M:
                 for t in TIME:
-                    INPUT_FILE = INPUT_FILE_DIR + '/ViewDEP-AlgIJCAIBESTM-N' + str(n) + '-T' + str(t) + '-M' + str(m) + '-Rho' + str(rho) + '-Run' + str(run)+ '-BEST.json'
+                    INPUT_FILE = INPUT_FILE_DIR + '/ViewDEP-Alg' + alg + '-N' + str(n) + '-T' + str(t) + '-M' + str(m) + '-Rho' + str(rho) + '-Run' + str(run)+ '-BEST.json'
                     with open(INPUT_FILE, "r") as input_file:
                         json_data = input_file.read()
                         plan = jsonpickle.decode(json_data)
-                        print "N:", n, "M:", m, "T:", t, "PLANNING TIME:", plan.planning_time
+                        print "N:", n, "M:", m, "T:", t, "PLANNING TIME:", plan.planning_time, "Len:", len(plan.views)
                         run_stats[(str(run), str(rho), str(n), str(t), str(m))] = plan
 
 

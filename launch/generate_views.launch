@@ -2,7 +2,7 @@
   <arg name="robot" default="scitos_coverage"/>
   <arg name="num_of_views" default="500"/>
   <arg name="coverage" default="false"/>
-  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/views.json"/>
+  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/g4s/views.json"/>
 
   <include file="$(find viper)/launch/$(arg robot)/_generate_views.launch"/>
 

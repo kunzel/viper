@@ -1,9 +1,9 @@
 <launch>
   <arg name="robot" default="scitos_coverage"/>
-  <arg name="input_file" default="$(find viper)/data/op/$(arg robot)/views.json"/>
-  <arg name="output_file_values" default="$(find viper)/data/op/$(arg robot)/view_values.json"/>
-  <arg name="output_file_costs" default="$(find viper)/data/op/$(arg robot)/view_costs.json"/>
-  <arg name="output_file_view_keys" default="$(find viper)/data/op/$(arg robot)/view_keys.json"/>
+  <arg name="input_file" default="$(find viper)/data/op/$(arg robot)/g4s/views.json"/>
+  <arg name="output_file_values" default="$(find viper)/data/op/$(arg robot)/g4s/view_values.json"/>
+  <arg name="output_file_costs" default="$(find viper)/data/op/$(arg robot)/g4s/view_costs.json"/>
+  <arg name="output_file_view_keys" default="$(find viper)/data/op/$(arg robot)/g4s/view_keys.json"/>
 
   <include file="$(find viper)/launch/$(arg robot)/_evalaute_views.launch"/>
 

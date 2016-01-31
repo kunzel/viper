@@ -120,6 +120,7 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
             resp = self.nav_goals(1, self.inflation_radius, self.roi)
             
             if not resp.goals.poses:
+                print "DOES THIS HAPPEN???????????"
                 self.views = []
                 return 
             for i in range(0,self.views_at_pose):

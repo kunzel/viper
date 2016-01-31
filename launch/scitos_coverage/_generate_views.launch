@@ -6,15 +6,24 @@
   <!--<rosparam param="roi">[]</rosparam>-->   
   <!--<rosparam param="roi">[[2.0,-8.0],[5.0,-8.0],[5.0,2.0],[2.0,2.0]]</rosparam>--> <!--cs_lg_obj_search_octomap.bt-->
   <!-- <rosparam param="roi">[[-0.4,-8.5],[-0.4,1.0],[4.5,1.0],[4.5,-8.5]]</rosparam> icaps OLD-->
-  <rosparam param="roi">[[3.8,0.2],[3.8,-6.5],[1.2,-6.5],[1.2,0.2]]</rosparam> <!--icaps 2016-->
-  <param name="inflation_radius" type="double" value="0.5" />  
+  <!-- <rosparam param="roi">[[3.8,0.2],[3.8,-6.5],[1.2,-6.5],[1.2,0.2]]</rosparam> --> <!--IJCAI IRLAB 2016-->
+  <param name="inflation_radius" type="double" value="0.01" />  
   <param name="views_at_pose" type="int" value="10" /> 
   <param name="min_coverage" type="double" value="0.98" /> 
 
   <!-- <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/bham/maps/cs_lg_obj_search_octomap.bt"/> -->
   <!-- <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/bham/maps/icaps.bt"/> -->
 
+  <!-- IJCAI IRLAB 
   <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/bham/maps/cs_lg_viewplanning.bt"/>
+  -->
+  
+  <!-- IJCAI G4S --> 
+  <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/g4s/maps/g4s_ijcai.bt"/>
+
+  <!-- IJCAI ALOOF 
+  <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/aloof/maps/aloof_ijcai.bt"/>-->
+
 
   <arg name="map" default="/projected_map"/>  
   <include file="$(find nav_goals_generator)/launch/nav_goals_generator.launch">

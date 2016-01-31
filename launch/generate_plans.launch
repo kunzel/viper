@@ -1,26 +1,29 @@
 <launch>
   <arg name="robot" default="scitos_coverage"/>
   <!-- views: DEP or IND or IND--> 
-  <arg name="setting" default="IND"/>  
+  <arg name="setting" default="DEP"/>  
   <!-- algorithm: SRC, DRC, SR, DR, SC, DC --> 
-  <arg name="alg" default="SRC"/> 
+  <arg name="alg" default="GIBBS"/> 
 
   <arg name="run" default="0"/> 
 
   <arg name="best_m" default="10"/> 
-  <arg name="num_of_plans" default="2000"/>
+  <arg name="num_of_plans" default="1000"/>
   <!-- <arg name="plan_length" default="25"/> -->
   <arg name="time_window" default="10"/>
   <arg name="rho" default="1.0"/>
-  <arg name="input_file" default="$(find viper)/data/op/$(arg robot)/view_keys.json"/>
-  <arg name="input_file_values" default="$(find viper)/data/op/$(arg robot)/view_values.json"/>
-  <arg name="input_file_costs" default="$(find viper)/data/op/$(arg robot)/view_costs.json"/>
+
+  <arg name="env" default="irlab"/>
+
+  <arg name="input_file" default="$(find viper)/data/op/$(arg robot)/$(arg env)/view_keys.json"/>
+  <arg name="input_file_values" default="$(find viper)/data/op/$(arg robot)/$(arg env)/view_values.json"/>
+  <arg name="input_file_costs" default="$(find viper)/data/op/$(arg robot)/$(arg env)/view_costs.json"/>
 b
 
   <!-- <arg name="run" default="123"/>-->
-  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-M$(arg best_m)-Rho$(arg rho)-Run$(arg run).json"/>
+  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/$(arg env)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-M$(arg best_m)-Rho$(arg rho)-Run$(arg run).json"/>
 
-  <arg name="output_file_best" default="$(find viper)/data/op/$(arg robot)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-M$(arg best_m)-Rho$(arg rho)-Run$(arg run)-BEST.json"/>
+  <arg name="output_file_best" default="$(find viper)/data/op/$(arg robot)/$(arg env)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-M$(arg best_m)-Rho$(arg rho)-Run$(arg run)-BEST.json"/>
 
 
   <include file="$(find viper)/launch/$(arg robot)/_generate_plans.launch"/>
