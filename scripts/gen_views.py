@@ -20,7 +20,8 @@ COVERAGE     = rospy.get_param('~coverage', False)
 
 
 from soma_roi_manager.soma_roi import SOMAROIQuery
-soma_map  = "g4s"
+#soma_map  = "g4s"
+soma_map  = "aloof"
 soma_conf = "ijcai"
 roi_id   = '1'
 soma = SOMAROIQuery(soma_map, soma_conf)

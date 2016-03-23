@@ -207,8 +207,8 @@ class ScitosViewController(viper.core.robot.ViewController):
         goal = PtuGotoGoal()
         goal.pan = ptu_state.position[ptu_state.name.index('pan')] * 180/math.pi
         goal.tilt = ptu_state.position[ptu_state.name.index('tilt')]  * 180/math.pi
-        goal.pan_vel = ptu_state.velocity[ptu_state.name.index('pan')] * 100
-        goal.tilt_vel = ptu_state.velocity[ptu_state.name.index('tilt')] * 100
+        goal.pan_vel = 100 #ptu_state.velocity[ptu_state.name.index('pan')] * 100
+        goal.tilt_vel =100 #ptu_state.velocity[ptu_state.name.index('tilt')] * 100
         self.ptu_client.send_goal(goal)
         self.ptu_client.wait_for_result()
 
@@ -229,6 +229,54 @@ class ScitosViewController(viper.core.robot.ViewController):
             rospy.loginfo("Wait for move_base")
         rospy.loginfo("Reached move_base goal")
         self.client.cancel_goal()
+
+        # rospy.loginfo("Execute view")
+        # if self.first_call:
+        #     self.setup()
+        #     self.first_call = False
+
+        # #try:
+        # #    rospy.loginfo("Wait for /ptu/state")
+        # #    msg = rospy.wait_for_message("/ptu/state", JointState, timeout=10.0)
+        # #    self.ptu_cb(msg)
+        # #except rospy.ROSException, e:
+        # #    rospy.logwarn("Failed to get /ptu/state")
+
+        
+        # self.robot_pose = view.get_robot_pose()
+
+        # self.mb_done = False
+        # mb_thread = threading.Thread(target = self.move_base)
+        # mb_thread.start()
+
+
+        # ptu_state = view.get_ptu_state()
+
+        # goal = PtuGotoGoal()
+        # goal.pan = ptu_state.position[ptu_state.name.index('pan')] * 180/math.pi
+        # goal.tilt = ptu_state.position[ptu_state.name.index('tilt')]  * 180/math.pi
+        # goal.pan_vel = ptu_state.velocity[ptu_state.name.index('pan')] * 100
+        # goal.tilt_vel = ptu_state.velocity[ptu_state.name.index('tilt')] * 100
+        # self.ptu_client.send_goal(goal)
+        # self.ptu_client.wait_for_result()
+
+        # # joint_state = view.get_ptu_state()        
+        # # joint_state.header.frame_id = 'tessdaf'
+        # # joint_state.name = ['pan', 'tilt']
+        # # joint_state.position = [joint_state.position[joint_state.name.index('pan')],joint_state.position[joint_state.name.index('tilt')]]
+        # # joint_state.velocity = [joint_state.velocity[joint_state.name.index('pan')],joint_state.velocity[joint_state.name.index('tilt')]]
+        # # joint_state.effort = [float(1.0),float(1.0)]
+        # # self.ptu_cmd.publish(joint_state)
+
+        # #while not self.achieved(joint_state):
+        # #    rospy.loginfo("Wait for ptu")
+        # #    rospy.sleep(rospy.Duration(0.5))
+        # rospy.loginfo("Reached ptu goal")
+        # while self.mb_done == False: #self.client.get_state() == GoalStatus.ACTIVE:
+        #     rospy.sleep(rospy.Duration(0.5))
+        #     rospy.loginfo("Wait for move_base")
+        # rospy.loginfo("Reached move_base goal")
+        # self.client.cancel_goal()
 
     def achieved(self, joint_state):
         EPSILON = 0.1

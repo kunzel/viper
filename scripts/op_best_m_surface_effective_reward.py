@@ -21,7 +21,7 @@ robot = viper.robots.scitos_coverage.ScitosRobot()
 
 font = {#'family' : 'normal',
 #        'weight' : 'bold',
-        'size'   : 22}
+        'size'   : 32}
 
 matplotlib.rc('font', **font)
 
@@ -29,15 +29,20 @@ rospy.init_node('figure')
     
 INPUT_FILE_DIR = rospy.get_param('~input_file_dir', '.')
 
+# OLD G4S!!!!
+#MAX_REWARD = 11128
+
+surface = dict()
 
 #alg = "IRLABBESTM"
 #MAX_REWARD = 2637
 
-# OLD G4S!!!!
-alg = "G4SBESTM"
-#MAX_REWARD = 11128
 # NEW G4S
+alg = "G4SBESTM"
 MAX_REWARD = 10498
+
+#alg = "ALOOFBESTM"
+#MAX_REWARD = 4156
 
 
 runs = [0]
@@ -46,12 +51,13 @@ rhos = ['1.0']
 
 
 # variables that effect planning time
-N = [5, 10, 20, 30, 40, 50, 100, 250] #, 500] #, 1000, 2000] 
+N = [5, 10, 20, 30, 40, 50, 100, 250, 500] #, 1000, 2000] 
 TIME =  [30, 60, 120, 180, 240, 300] #, 600]
 time_colors = [('r', '^'), ('g', '>'), ('b', 'v'), ('y', '<'),('m', '.'),('c', 'o'),('w','+')] #('k','*')]
 BEST_M = [5, 10, 15, 20, 30, 50, 100, 125, -1] #165, 467] #[5, 10, 15, 20, 30, 50, 100, 125, 165]
 
-TWINDOW = [60, 180, 300] # 600
+#TWINDOW = [30, 60, 120, 180, 240, 300] # 600
+TWINDOW = [120] #[30,60,120,180,240,300] # 600
 
 
 INPUT_FILE_COSTS = rospy.get_param('~input_file_costs', '../view_costs.json')
@@ -123,7 +129,7 @@ for run in runs:
 fig = plt.figure()
 
 
-plots = [131,132,133] #,234,235,236]
+plots = [111] #[231,232,233,234,235,236] #[131, 132, 133] #[231,232,233,234,235,236]
 p = 0
 for twin in TWINDOW:
     print p, twin
@@ -131,11 +137,12 @@ for twin in TWINDOW:
     ax2 = fig.add_subplot(plots[p], projection='3d')
     p +=1
     max_r = dict()
+    max_tx = dict()
     max_t = 0
     min_t = dict()
     for t in TIME:
 
-        if t >= twin:
+        if t > twin:
             continue
         
         xs = []
@@ -147,7 +154,7 @@ for twin in TWINDOW:
             for m in BEST_M:
                 plan = run_stats[(str(0), str(1.0), str(n), str(t), str(m))]
                 pt = plan.planning_time
-                if pt > twin:# and False:
+                if pt > twin: # and False:
                     r = 0
                 else:
                     r = 0
@@ -158,7 +165,7 @@ for twin in TWINDOW:
                     keys = dict()
                     while  i < len(plan.views) and (pt + et) <= twin:
                         r_old =  r
-                        cost_old = pt + et # et
+                        cost_old =  pt + et # et
                         v = plan.views[i]
                         for k in v.get_keys():
                             if k not in keys:
@@ -173,6 +180,8 @@ for twin in TWINDOW:
                 ys.append(m)
                 zs.append(r)
 
+                
+
                 cost = cost_old
                 
                 # if (n,m) not in min_t:
@@ -183,12 +192,15 @@ for twin in TWINDOW:
                 
                 if (n,m) not in max_r:
                     max_r[(n,m)] = r
+                    max_tx[(n,m)] = t
                     min_t[(n,m)] = cost
                     if cost > max_t:
                         max_t = cost
+
                 else:
                     if r > max_r[(n,m)]:
                         max_r[(n,m)] = r
+                        max_tx[(n,m)] = t
                         min_t[(n,m)] = cost
                         if cost > max_t:
                             max_t = cost
@@ -211,14 +223,25 @@ for twin in TWINDOW:
         for m in BEST_M:
             xtmp.append(n)
             if m == -1:
-                #ytmp.append(165) # IRLAB
-                ytmp.append(314) # G4S NEW
+                if alg == 'IRLABBESTM':
+                    ytmp.append(165) # IRLAB
+                elif alg == 'G4SBESTM':
+                    ytmp.append(314) # G4S NEW
+                elif alg == 'ALOOFBESTM':
+                    ytmp.append(185) # ALOOF
+                else:
+                    print 'ERROR WITH ENV SETTING'
             else:
                 ytmp.append(m)
+                
             ztmp.append(max_r[(n,m)])
             ctmp.append((float(min_t[(n,m)])/max_t))
             rctmp.append(max_r[(n,m)]/((float(min_t[(n,m)])/max_t))+0.01)
 
+            surface[(twin,n,m,max_tx[(n,m)],'R')] = max_r[(n,m)]
+            surface[(twin,n,m,max_tx[(n,m)],'C')] = (float(min_t[(n,m)])/max_t)
+            surface[(twin,n,m,max_tx[(n,m)],'R/C')] = max_r[(n,m)]/((float(min_t[(n,m)])/max_t))+0.01
+        
         X.append(xtmp)
         Y.append(ytmp)
         Z.append(ztmp)
@@ -235,30 +258,36 @@ for twin in TWINDOW:
     #X, Y, Z = axes3d.get_test_data(0.05)
     nZ = []
 
-    #ax2.plot_surface(X, Y, Z, rstride=1, cstride=1, alpha=0.2, linewidth=1, edgecolors='b', color='b')
+    ax2.plot_surface(X, Y, Z, rstride=1, cstride=1, alpha=0.2, linewidth=1, edgecolors='b', color='b')
     #ax2.plot_surface(X, Y, C, rstride=1, cstride=1, alpha=0.2, linewidth=1, edgecolors='r', color='r')
-    ax2.plot_surface(X, Y, RC, rstride=1, cstride=1, alpha=0.2, linewidth=1, edgecolors='b', color='b')
+    #ax2.plot_surface(X, Y, RC, rstride=1, cstride=1, alpha=0.2, linewidth=1, edgecolors='g', color='g')
 
     #cset = ax2.contour(X, Y, Z, zdir='z', offset=0, cmap=cm.coolwarm)
     #cset = ax2.contour(X, Y, Z, zdir='x', offset=5, cmap=cm.coolwarm)
     #cset = ax2.contour(X, Y, Z, zdir='y', offset=0, cmap=cm.coolwarm)
 
-    fs = 30
+    fs = 42
     stepsize = 100
     
-    ax2.set_title('T='+str(twin), fontsize=fs)
-    ax2.set_xlabel('N', fontsize=fs)
+    ax2.set_title('$T$='+str(twin), fontsize=fs)
+    ax2.set_xlabel('$n_s$', fontsize=fs)
     start, end = ax2.get_xlim()
     ax2.xaxis.set_ticks(np.arange(start, end, stepsize))
     #ax.set_xlim(0)
-    ax2.set_ylabel('M', fontsize=fs)
+    ax2.set_ylabel('$m$', fontsize=fs)
     start, end = ax2.get_ylim()
     ax2.yaxis.set_ticks(np.arange(start, end, stepsize))
     #ax.set_ylim(-40, 40)
-    ax2.set_zlabel('R/C', fontsize=fs)
+    ax2.set_zlabel('$R_T$', fontsize=fs)
     #ax2.set_zlim(0, 1)
 
 plt.show()
+
+
+with open("./Surface-" + alg + ".json", "w") as outfile:
+    json_data = jsonpickle.encode(surface)
+    outfile.write(json_data)
+       
 
     # ax.set_xlabel('#paths (N)')
     # ax.set_ylabel('best views (M)')

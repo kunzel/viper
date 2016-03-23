@@ -74,10 +74,10 @@ view_costs[current_view.ID] = vcosts
 view_costs[current_view.ID][current_view.ID] = 0  
     
 #Irlab 
-MAX_REWARD = 2637
+#MAX_REWARD = 2637
 
 #G4s new
-#MAX_REWARD = 10498
+MAX_REWARD = 10498
 
 
 print "Plan analysis started:"
@@ -110,15 +110,15 @@ for f in sys.argv[1:]:
 
         # TABLE 1
         import math
-        #table.append([ f, float(reward) / MAX_REWARD,'&', math.floor(costs),'&', math.floor(plan.planning_time), '&', len(plan.views),'\\\\'])
+        table.append([ f, float(reward) / MAX_REWARD,'&', math.floor(costs),'&', plan.planning_time, '&', len(plan.views),'&'])
 
         # TABLE 2
-        table.append([ f, float(reward) / MAX_REWARD,'&', len(plan.views), '&'])
+        #table.append([ f, float(reward) / MAX_REWARD,'&', len(plan.views), '&'])
 
     # TABLE 1
-    #print tabulate(table, headers=['CONF', 'R','&', 'T_E', '&', 'T_P', '&','|s|','\\\\'],tablefmt='rst')
+    print tabulate(table, headers=['CONF', 'R','&', 'T_E', '&', 'T_P', '&','|s|','&'],tablefmt='rst')
     # TABLE 2
-    print tabulate(table, headers=['CONF', 'R','&', '|s|', '&'''],tablefmt='rst')
+    #print tabulate(table, headers=['CONF', 'R','&', '|s|', '&'''],tablefmt='rst')
 
 
 print "Plan analysis finished."

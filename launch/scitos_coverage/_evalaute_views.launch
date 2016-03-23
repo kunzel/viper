@@ -9,11 +9,11 @@
   <!-- IJCAI IRLAB
        <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/bham/maps/cs_lg_viewplanning.bt"/> -->
 
-  <!-- IJCAI G4S -->
+  <!-- IJCAI G4S 
   <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/g4s/maps/g4s_ijcai.bt"/> 
-
-  <!-- IJCAI ALOOF
-  <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/aloof/maps/aloof_ijcai.bt"/>-->
+  -->
+  <!-- IJCAI ALOOF -->
+  <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/aloof/maps/aloof_ijcai.bt"/>
 
 
   <node name="evaluate_view" pkg="viper" type="eval_view" output="screen"/>

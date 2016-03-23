@@ -1,13 +1,19 @@
 <launch>
-  <arg name="robot" default="scitos"/>
-  <arg name="input_file_plans_dir" default="$(find viper)/data/$(arg robot)"/>
+  <arg name="robot" default="scitos_coverage"/>
+  <arg name="input_file_plans_dir" default="$(find viper)/data/op/$(arg robot)/g4s/plans/"/>
 
   <arg name="rho" default="1.0"/>
   <arg name="run" default="0"/>
-  <arg name="scn" default="A"/>
+  <!-- <arg name="scn" default="A"/> -->
 
-  <arg name="input_file_plans_name" default="plans-$(arg scn)-$(arg rho)-$(arg run).json"/>
-  <arg name="input_file_plan_values" default="$(find viper)/data/$(arg robot)/plans-$(arg scn)-$(arg rho)-$(arg run)-VALUES.json"/>
+  <arg name="N" default="5"/>
+  <arg name="M" default="5"/>
+  <arg name="T" default="30"/>
+
+                                              
+  <arg name="input_file_plans_name" default="ViewDEP-AlgG4SBESTM-N$(arg N)-T$(arg T)-M$(arg M)-Rho$(arg rho)-Run$(arg run)-BEST.json"/>
+
+  <arg name="input_file_plan_values" default=""/>
 
   <include file="$(find viper)/launch/$(arg robot)/_execute_plan.launch"/>
 

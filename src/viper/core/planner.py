@@ -231,9 +231,23 @@ class ViewPlanner(object):
         
         #value_pmf.normalize()
         return value_pmf
-        
-        
+
     def sample_plans(self, num_of_plans, time_window, rho, best_m, views, view_values, view_costs, view_start, view_end):
+
+        plans = []
+        for i in range(0, num_of_plans):
+            print "Sample plan ", i
+            #  IJCAI: baseline_DEP_greedy_tsp  baseline_DEP_tsp sample_plan_1984
+            #  
+            plan = self.baseline_DEP_tsp(str(i), time_window, rho, best_m, views, view_values, view_costs, view_start, view_end)
+
+                        
+            v_start = view_start.ID
+            print "Length: ", len(plan.views), "Cost: ", plan.cost, "Reward: ", plan.reward 
+            plans.append(plan)
+        return plans
+        
+    def sample_plans_IJCAI(self, num_of_plans, time_window, rho, best_m, views, view_values, view_costs, view_start, view_end):
 
         # plans = []
         # for i in range(0, num_of_plans):
@@ -317,7 +331,8 @@ class ViewPlanner(object):
         # No plan was found for time_window! Return plan with v_start/v_end: here the same
         return old_plan
 
-    def baseline_DEP_greedy_tsp(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+        #self.baseline_DEP_greedy_tsp(str(i), time_window, rho, best_m, views, view_values, view_costs, view_start, view_end)
+    def baseline_DEP_greedy_tsp(self, plan_id, time_window, rho, best_m, views, view_values, view_costs, view_start, view_end):
         remaining_views = dict()
         for v in views:
             if v.ID != view_start.ID and v.ID != view_end.ID: 
@@ -360,9 +375,10 @@ class ViewPlanner(object):
         # No plan was found for time_window! Return plan with v_start/v_end: here the same
         return old_plan
 
-        
-        
-    def baseline_DEP_tsp(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+
+                #self.baseline_DEP_greedy_tsp(str(i), time_window, rho, best_m, views, view_values, view_costs, view_start, view_end)
+
+    def baseline_DEP_tsp(self, plan_id, time_window, rho, best_m, views, view_values, view_costs, view_start, view_end):
         remaining_views = dict()
         for v in views:
             if v.ID != view_start.ID and v.ID != view_end.ID: 
@@ -381,11 +397,11 @@ class ViewPlanner(object):
             
         views_sorted = A
 
-        n = 1
+        n = 20
         old_cost = 0
         old_plan = Plan(plan_id)
         #if n == n:
-        while n < len(views_sorted):
+        while n < best_m: #len(views_sorted): # best_m: #len(views_sorted): # best_m: #
 
             considered_views = [view_start.ID] + views_sorted[:n] # consider only the best n views 
 
@@ -471,9 +487,10 @@ class ViewPlanner(object):
                     considered_views.pop(considered_views.index(view_id))
                     cost += min_cost
 
-        last_view_ID = plan.views[-1].ID
-        plan.append(view_end)
-        plan.cost = cost + view_costs[last_view_ID][view_end.ID]
+        #last_view_ID = plan.views[-1].ID
+        #plan.append(view_end)
+        plan.cost = cost #+ view_costs[last_view_ID][view_end.ID]
+
         # print "Plan:"
         # for v in plan.views:
         #     print v.ID
@@ -528,9 +545,9 @@ class ViewPlanner(object):
 	# Find the shortest tour out of all narrowed candidates
 	minTour = float("inf")
 	for j in range(2, numViews + 1):
-		if A[tuple(range(1, numViews + 1))][j] + view_costs[vid[j]][vid[1]] < minTour:	# Just compare the total distances including the final hop
-			print(tuple(range(1, numViews + 1)))
-			minTour = A[tuple(range(1, numViews + 1))][j] + view_costs[vid[j]][vid[1]]
+		if A[tuple(range(1, numViews + 1))][j] < minTour: #### + view_costs[vid[j]][vid[1]] < minTour:	# Just compare the total distances including the final hop ### IGNORE FINAL HOP
+			print(tuple(range(1, numViews))) # + 1)))
+			minTour = A[tuple(range(1, numViews + 1))][j] #### + view_costs[vid[j]][vid[1]]
                         minJ = j
 
 
@@ -562,12 +579,12 @@ class ViewPlanner(object):
             for v in views:
                 if view_id == v.ID:
                     plan.append(v)
-        plan.append(view_end)
+        ####plan.append(view_end) no return
         plan.cost = minTour
 	return (minTour, plan)
         
         
-    def sample_plan_1984(self, plan_id, time_window, rho, views, view_values, view_costs, view_start, view_end):
+    def sample_plan_1984(self, plan_id, time_window, rho, best_m, views, view_values, view_costs, view_start, view_end):
         l = 4
         r = 4.0
     
@@ -586,7 +603,7 @@ class ViewPlanner(object):
 
         A_sorted = sorted(A, reverse=True)
         f = len(A_sorted)
-        k = f # min(l,f)
+        k = min(l,f) # f
 
         pmf = Pmf()
         for i in range(0,k):
@@ -603,12 +620,12 @@ class ViewPlanner(object):
             #print x
             plan.append(remaining_views[x])
             # check whether node can be added OR we have to go to v_end (at the moment the starting node)
-            current_cost = self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
+            current_cost = self.calc_plan_cost(plan, view_costs, v_start) ##+ view_costs[x][v_end] # view_costs[x][v_end] NOTE: ADD costs from each node to current_pose in cost matrix
             if current_cost > float(time_window):
                 #print "Cost > time_window: ", self.calc_plan_cost(plan, view_costs, v_start) + view_costs[x][v_end]
                 plan.pop() # remove the
                 #print "Cost OK: ", self.calc_plan_cost(plan, view_costs, v_start)
-                plan.append(view_end)
+                #plan.append(view_end)
                 plan.cost = self.calc_plan_cost(plan, view_costs, v_start)
                 return plan
 
