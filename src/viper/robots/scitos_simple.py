@@ -264,7 +264,7 @@ class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
 
     def __init__(self):
         self.first_call = True
-        self.nav_lin_vel = 0.95
+        self.nav_lin_vel = 0.2
         self.nav_ang_vel = 1.0
         self.ptu_ang_vel = 1.0
 

@@ -296,7 +296,7 @@ bool get_keys(viper::GetKeys::Request  &req,
 
   //OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
 
-  /* NOTE: USE IT WHEN ON ROBOT, BUT NOT FOR BATCH EVALUATION 
+  /* NOTE: USE IT WHEN ON ROBOT, BUT NOT FOR BATCH EVALUATION */
   AbstractOcTree* tree = octomap_msgs::fullMsgToMap(req.octomap);
   if (!tree){
     ROS_ERROR("Failed to recreate octomap");
@@ -312,7 +312,7 @@ bool get_keys(viper::GetKeys::Request  &req,
     ROS_ERROR("No map received!");
     input_tree = NULL;
   }
-  */
+  
   
   if (input_tree == NULL)
     return false;
@@ -359,8 +359,7 @@ bool view_eval(viper::ViewValue::Request  &req,
   geometry_msgs::Pose camera_pose = req.pose; 
 
   //OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
-
-  /* NOTE: USE IT WHEN ON ROBOT, BUT NOT FOR BATCH EVALUATION 
+  /* NOTE: USE IT WHEN ON ROBOT, BUT NOT FOR BATCH EVALUATION */
   AbstractOcTree* tree = octomap_msgs::fullMsgToMap(req.octomap);
   if (!tree){
     ROS_ERROR("Failed to recreate octomap");
@@ -376,7 +375,7 @@ bool view_eval(viper::ViewValue::Request  &req,
     ROS_ERROR("No map received!");
     input_tree = NULL;
   }
-  */
+  
   
   // Generate frustum.
   Frustum f = generate_frustum(camera_pose);
@@ -402,7 +401,8 @@ int main (int argc, char** argv)
   //node.getParam("frustum_far", frustum_far);
   //node.getParam("frustum_angle", frustum_angle);
 
-  input_tree = retrieve_octree();  
+  // USE ONLY WHEN OCTOMAP IS NOT SEND VIA REQUEST
+  //input_tree = retrieve_octree();  
   
   ros::ServiceServer view_eval_service = node.advertiseService("view_eval", view_eval);
   ROS_INFO("Started view evaluation service");

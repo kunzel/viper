@@ -13,6 +13,8 @@ class Pmf(object):
         self.d = dict()
 
     def prob(self, x):
+        if x == -1:
+            return 0.0
         return self.d[x]  
 
     def set(self, x, val):
@@ -1129,7 +1131,7 @@ class ViewPlanner(object):
     def compute_plan_values(self, plans, view_values, view_costs):
         plan_values = dict()
         for p in plans:
-            value = self.evaluate_plan(p, view_values, view_costs)
+            value = self.calc_plan_cost(self, plan, view_costs, 666) #self.evaluate_plan(p, view_values, view_costs)
             plan_values[p.ID] = value
         return plan_values
 
