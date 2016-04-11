@@ -1,8 +1,15 @@
 <launch>
   <arg name="robot" default="scitos_coverage"/>
-  <arg name="num_of_views" default="500"/>
-  <arg name="coverage" default="false"/>
-  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/aloof/views.json"/>
+  <arg name="num_of_views" default="5000"/>
+  <arg name="coverage" default="true"/>
+
+  <arg name="exp" default="ecai"/>
+  <arg name="env" default="1"/> <!-- 1, 2, 3, 4 -->
+  <arg name="soma_roi" default="1"/> <!-- 1, 3, 4, 5 -->
+
+  <arg name="output_file" default="$(find viper)/data/$(arg exp)/env$(arg env)/views.json"/>
+
+  <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/aloof/maps/ecai$(arg env).bt"/>
 
   <include file="$(find viper)/launch/$(arg robot)/_generate_views.launch"/>
 
@@ -11,5 +18,6 @@
     <param name="num_of_views" type="int" value="$(arg num_of_views)"/>
     <param name="coverage" type="boolean" value="$(arg coverage)"/>
     <param name="output_file" type="string" value="$(arg output_file)"/>
+    <param name="soma_roi" type="string" value="$(arg soma_roi)"/>
   </node>
 </launch>

@@ -1,17 +1,27 @@
 <launch>
   <arg name="robot" default="scitos_coverage"/>
-  <arg name="input_file_plans_dir" default="$(find viper)/data/op/$(arg robot)/g4s/plans/"/>
+  <arg name="exp" default="ecai"/>
+  <arg name="env" default="1"/> <!-- 1, 2, 3, 4 -->
+  <arg name="soma_roi" default="1"/> <!-- 1, 3, 4, 5 -->
+  <arg name="setting" default="DEP"/>  
+  <!-- algorithm: OP_S, TSP_G, TSP_DP, VP-S -->
+  <arg name="alg" default="VP_S"/> 
+
+
+
+  <arg name="input_file_plans_dir" default="$(find viper)/data/$(arg exp)/env$(arg env)/plans/"/>
 
   <arg name="rho" default="1.0"/>
   <arg name="run" default="0"/>
   <!-- <arg name="scn" default="A"/> -->
 
-  <arg name="N" default="5"/>
-  <arg name="M" default="5"/>
-  <arg name="T" default="30"/>
+  <arg name="N" default="10"/>
+  <arg name="M" default="0"/>
+  <arg name="T" default="60"/>
+
 
                                               
-  <arg name="input_file_plans_name" default="ViewDEP-AlgG4SBESTM-N$(arg N)-T$(arg T)-M$(arg M)-Rho$(arg rho)-Run$(arg run)-BEST.json"/>
+  <arg name="input_file_plans_name" default="View$(arg setting)-Alg$(arg alg)-N$(arg N)-T$(arg T)-M$(arg M)-Rho$(arg rho)-Run$(arg run)-BEST.json"/>
 
   <arg name="input_file_plan_values" default=""/>
 

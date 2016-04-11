@@ -312,7 +312,7 @@ class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
 
     def __init__(self):
         self.first_call = True
-        self.nav_lin_vel = 0.3
+        self.nav_lin_vel = 0.15
         self.nav_ang_vel = 1.0
         self.ptu_ang_vel = 1.0
 
@@ -338,8 +338,8 @@ class ScitosTransitionModel(viper.core.robot.ViewTransitionModel):
         s2 = view2.get_ptu_state()
         ptu_cost = self.ptu_cost(s1,s2)
 
-        cost = max(nav_cost, ptu_cost)
-
+        cost = max(nav_cost, ptu_cost) + 2.0 # (perception costs)
+    
         return cost
 
     def nav_cost(self, p1, p2):

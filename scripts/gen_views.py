@@ -17,13 +17,13 @@ robot = viper.robots.scitos_coverage.ScitosRobot()
 NUM_OF_VIEWS = rospy.get_param('~num_of_views', 100)
 FILENAME     = rospy.get_param('~output_file', 'views.json')
 COVERAGE     = rospy.get_param('~coverage', False)
+SOMA_ROI     = rospy.get_param('~soma_roi', '0')
 
 
 from soma_roi_manager.soma_roi import SOMAROIQuery
-#soma_map  = "g4s"
-soma_map  = "aloof"
-soma_conf = "ijcai"
-roi_id   = '1'
+soma_map  = "ecai"
+soma_conf = "ecai"
+roi_id   =  SOMA_ROI
 soma = SOMAROIQuery(soma_map, soma_conf)
 poly = soma.get_polygon(roi_id)
 

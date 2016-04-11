@@ -63,7 +63,7 @@ OcTree* extract_supporting_planes(OcTree* tree)
             }
           if (normals.size() > 0) 
             {
-              supported++;
+
               // cout << "#Normals: " << normals.size() << endl;
 
               avg_normal/= normals.size();       
@@ -75,6 +75,7 @@ OcTree* extract_supporting_planes(OcTree* tree)
 
               if ( angle < ANGLE_MAX_DIFF)
                 {
+                  supported++;
                   sp_tree->updateNode(coord,true);
                 } 
             }  

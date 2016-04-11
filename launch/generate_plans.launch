@@ -2,28 +2,31 @@
   <arg name="robot" default="scitos_coverage"/>
   <!-- views: DEP or IND or IND--> 
   <arg name="setting" default="DEP"/>  
-  <!-- algorithm: SRC, DRC, SR, DR, SC, DC --> 
-  <arg name="alg" default="GIBBS"/> 
-
+  <!-- algorithm: OP_S, TSP_G, TSP_DP, VP-S -->
+  <arg name="alg" default="VP_S"/> 
   <arg name="run" default="0"/> 
 
-  <arg name="best_m" default="10"/> 
-  <arg name="num_of_plans" default="1000"/>
+  <arg name="best_m" default="20"/> 
+  <arg name="num_of_plans" default="10"/>
   <!-- <arg name="plan_length" default="25"/> -->
-  <arg name="time_window" default="10"/>
+  <arg name="time_window" default="120"/>
   <arg name="rho" default="1.0"/>
 
-  <arg name="env" default="irlab"/>
 
-  <arg name="input_file" default="$(find viper)/data/op/$(arg robot)/$(arg env)/view_keys.json"/>
-  <arg name="input_file_values" default="$(find viper)/data/op/$(arg robot)/$(arg env)/view_values.json"/>
-  <arg name="input_file_costs" default="$(find viper)/data/op/$(arg robot)/$(arg env)/view_costs.json"/>
+  <arg name="exp" default="ecai"/>
+  <arg name="env" default="1"/> <!-- 1, 2, 3, 4 -->
+  <arg name="soma_roi" default="1"/> <!-- 1, 3, 4, 5 -->
+
+  <arg name="input_file" default="$(find viper)/data/$(arg exp)/env$(arg env)/view_keys.json"/>
+
+  <arg name="input_file_values" default="$(find viper)/data/$(arg exp)/env$(arg env)/view_values.json"/>
+  <arg name="input_file_costs" default="$(find viper)/data/$(arg exp)/env$(arg env)/view_costs.json"/>
 b
 
   <!-- <arg name="run" default="123"/>-->
-  <arg name="output_file" default="$(find viper)/data/op/$(arg robot)/$(arg env)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-M$(arg best_m)-Rho$(arg rho)-Run$(arg run).json"/>
+  <arg name="output_file" default="$(find viper)/data/$(arg exp)/env$(arg env)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-M$(arg best_m)-Rho$(arg rho)-Run$(arg run).json"/>
 
-  <arg name="output_file_best" default="$(find viper)/data/op/$(arg robot)/$(arg env)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-M$(arg best_m)-Rho$(arg rho)-Run$(arg run)-BEST.json"/>
+  <arg name="output_file_best" default="$(find viper)/data/$(arg exp)/env$(arg env)/plans/View$(arg setting)-Alg$(arg alg)-N$(arg num_of_plans)-T$(arg time_window)-M$(arg best_m)-Rho$(arg rho)-Run$(arg run)-BEST.json"/>
 
 
   <include file="$(find viper)/launch/$(arg robot)/_generate_plans.launch"/>
@@ -32,6 +35,7 @@ b
     <param name="robot" type="string" value="$(arg robot)"/>
     <param name="num_of_plans" type="int" value="$(arg num_of_plans)"/>
     <!-- <param name="plan_length" type="int" value="$(arg plan_length)"/>-->
+    <param name="alg" type="string" value="$(arg alg)"/>
     <param name="time_window" type="int" value="$(arg time_window)"/>
     <param name="rho"  type="double" value="$(arg rho)"/>
     <param name="best_m" type="int" value="$(arg best_m)"/>

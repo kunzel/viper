@@ -13,7 +13,7 @@
   <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/g4s/maps/g4s_ijcai.bt"/> 
   -->
   <!-- IJCAI ALOOF -->
-  <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/aloof/maps/aloof_ijcai.bt"/>
+  <!-- <node name="octomap" pkg="octomap_server" type="octomap_server_node" args="$(find strands_morse)/aloof/maps/aloof_ijcai.bt"/>-->
 
 
   <node name="evaluate_view" pkg="viper" type="eval_view" output="screen"/>

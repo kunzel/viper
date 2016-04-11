@@ -381,37 +381,37 @@ for v in views:
     robot_poses.poses.append(v.get_robot_pose())
 robot_poses_pub.publish(robot_poses)
 
-
+print "COMPUTE COSTS..."
 #### COSTS #######################################
 view_costs = []
 view_costs = planner.compute_view_costs(views)
 
 #################################################
 
-# triangle marker
-markerArray = MarkerArray()    
-idx = 0
-for view in views:
-    val = view_values[view.ID]
-    print idx, val
-    if val > 0:
-        print "Create triangle marker with value", val
-        vis.create_marker(markerArray, view, view.get_ptu_pose(), view_values)
-    idx += 1
-vis.marker_len = len(markerArray.markers)
-vis.pubmarker.publish(markerArray)
+# # triangle marker
+# markerArray = MarkerArray()    
+# idx = 0
+# for view in views:
+#     val = view_values[view.ID]
+#     print idx, val
+#     if val > 0:
+#         print "Create triangle marker with value", val
+#         vis.create_marker(markerArray, view, view.get_ptu_pose(), view_values)
+#     idx += 1
+# vis.marker_len = len(markerArray.markers)
+# vis.pubmarker.publish(markerArray)
 
-# frustum marker
-frustum_marker = MarkerArray()    
-idx = 0
-for view in views:
-    val = view_values[view.ID]
-    print idx, val
-    if val > 50:
-        print "Create frustum marker with value", val, len(view.get_keys())
-        vis.create_frustum_marker(frustum_marker, view, view.get_ptu_pose(), view_values)
-    idx += 1
-vis.pubfrustum.publish(frustum_marker)
+# # frustum marker
+# frustum_marker = MarkerArray()    
+# idx = 0
+# for view in views:
+#     val = view_values[view.ID]
+#     print idx, val
+#     if val > 50:
+#         print "Create frustum marker with value", val, len(view.get_keys())
+#         vis.create_frustum_marker(frustum_marker, view, view.get_ptu_pose(), view_values)
+#     idx += 1
+# vis.pubfrustum.publish(frustum_marker)
 
 # cost marker
 # cost_marker = MarkerArray()    

@@ -18,6 +18,8 @@ TIME_WINDOW = rospy.get_param('~time_window', 120)
 RHO  = rospy.get_param('~rho', 1.0)
 BEST_M  = rospy.get_param('~best_m', 10)
 
+ALG  = rospy.get_param('~alg', "VP_S")
+
 
 INPUT_FILE = rospy.get_param('~input_file', 'view_keys.json')
 INPUT_FILE_VALUES = rospy.get_param('~input_file_values', 'view_values.json')
@@ -79,7 +81,11 @@ import time
 t_begin = time.time()
 if BEST_M <= 0:
     BEST_M = len(views)
-plans = planner.sample_plans(NUM_OF_PLANS, TIME_WINDOW, RHO, BEST_M, views, view_values, view_costs, current_view, current_view)
+
+if ALG == "VP_S":
+    plans = planner.sample_plans_IJCAI(NUM_OF_PLANS, TIME_WINDOW, RHO, BEST_M, views, view_values, view_costs, current_view, current_view)
+else:
+    print "ERROR: Unkown algorithm!"
 t_end = time.time()
 planning_time = t_end - t_begin
 rospy.loginfo("--- %s seconds ---" % (planning_time))
