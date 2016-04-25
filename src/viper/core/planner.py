@@ -64,6 +64,54 @@ class ViewPlanner(object):
     def __init__(self,robot):
         self._robot = robot 
 
+    def sample_views_coverage_in_roi(self, max_num_of_views, min_coverage, octomap, octomap_keys):
+
+    
+        # init
+        views = []
+        coverage = float(0) / len(octomap_keys) 
+        num_of_views = 0
+        key_val = dict()
+        MIN_NUM_OF_KEYS_COVERED = 1
+
+        # sample views until ROI is covered
+        while coverage < min_coverage and num_of_views < max_num_of_views:
+            
+            v = self._robot.generate()
+            
+            keys_covered = 0
+            value = self._robot.evaluate(v, None) #octomap)
+            for k in v.get_keys():
+                if k in octomap_keys:
+                    keys_covered += 1
+                    #if k not in key_val:
+                    #    key_val[k] = v.get_values()[v.get_keys().index(k)]
+
+                        
+            if v != None and keys_covered > MIN_NUM_OF_KEYS_COVERED:
+                views.append(v)
+                for k in v.get_keys():
+                    if k in octomap_keys:
+                        if k not in key_val:
+                            key_val[k] = v.get_values()[v.get_keys().index(k)]
+
+
+
+                # update coverage
+                coverage = float(len(key_val.keys())) / len(octomap_keys)
+                print('-------------------------------------------')
+                print "COVERAGE:", coverage, " #VIEWS:", num_of_views
+                print('-------------------------------------------')
+                num_of_views += 1
+
+        # give warning if max_number of views was exceeded
+        print('===========================================')
+        if num_of_views >= max_num_of_views:
+            print('WARNING: reached maximum number of views!')
+        print('COVERAGE:', coverage)
+        print('===========================================')
+        return views
+
     def sample_views_coverage(self, max_num_of_views, min_coverage, octomap, octomap_keys):
         
         # init
@@ -1131,7 +1179,7 @@ class ViewPlanner(object):
     def compute_plan_values(self, plans, view_values, view_costs):
         plan_values = dict()
         for p in plans:
-            value = self.calc_plan_cost(self, plan, view_costs, 666) #self.evaluate_plan(p, view_values, view_costs)
+            value = self.calc_plan_cost(p, view_costs, 666) #self.evaluate_plan(p, view_values, view_costs)
             plan_values[p.ID] = value
         return plan_values
 

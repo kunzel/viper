@@ -20,13 +20,16 @@ using octomap_msgs::GetOctomap;
 
 #include <viper/ViewValue.h>
 #include <viper/GetKeys.h>
+#include <viper/SetOctomap.h>
 
 #include "frustum.cpp"
 
 using namespace std;
 using namespace octomap;
 
-#define ANGLE_MAX_DIFF (M_PI / 8)  
+#define Z_MIN 0.5
+
+#define ANGLE_MAX_DIFF (M_PI / 4)  
 double frustum_near = 0.8;
 double frustum_far = 2.5;
 double frustum_angle = 40.5;
@@ -72,8 +75,9 @@ OcTree* extract_supporting_planes(OcTree* tree)
               double angle = avg_normal.angleTo(z_axis);
 
               point3d coord = it.getCoordinate();
+	      double z = it.getZ();
 
-              if ( angle < ANGLE_MAX_DIFF)
+              if ( angle < ANGLE_MAX_DIFF && z > Z_MIN)
                 {
                   sp_tree->updateNode(coord,true);
                 } 
@@ -287,12 +291,11 @@ std::vector<geometry_msgs::Point> get_points(Frustum f)
 }
 
 
-// Callback function for the service 'get_keys'
-bool get_keys(viper::GetKeys::Request  &req,
-              viper::GetKeys::Response &res)
+bool set_octomap(viper::SetOctomap::Request  &req,
+		 viper::SetOctomap::Response &res)
 {
   
-  ROS_INFO("Received service request: get_keys");
+  ROS_INFO("Received service request: set_octomap");
 
   //OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
 
@@ -300,7 +303,7 @@ bool get_keys(viper::GetKeys::Request  &req,
   AbstractOcTree* tree = octomap_msgs::fullMsgToMap(req.octomap);
   if (!tree){
     ROS_ERROR("Failed to recreate octomap");
-    return false;
+    return  false;
   }
 
   OcTree* octree = dynamic_cast<OcTree*>(tree);
@@ -316,6 +319,43 @@ bool get_keys(viper::GetKeys::Request  &req,
   
   if (input_tree == NULL)
     return false;
+  ROS_INFO("Finished service request.");
+  return true;
+}
+
+
+
+// Callback function for the service 'get_keys'
+bool get_keys(viper::GetKeys::Request  &req,
+              viper::GetKeys::Response &res)
+{
+  
+  ROS_INFO("Received service request: get_keys");
+
+  //OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
+
+  /* NOTE: USE IT WHEN ON ROBOT, BUT NOT FOR BATCH EVALUATION */
+  // AbstractOcTree* tree = octomap_msgs::fullMsgToMap(req.octomap);
+  // if (!tree){
+  //   ROS_ERROR("Failed to recreate octomap");
+  //   return false;
+  // }
+
+  // OcTree* octree = dynamic_cast<OcTree*>(tree);
+  
+  // if (octree){
+  //   ROS_INFO("Map received (%zu nodes, %f m res)", octree->size(), octree->getResolution());
+  //   input_tree = extract_supporting_planes(octree);
+  // } else{
+  //   ROS_ERROR("No map received!");
+  //   input_tree = NULL;
+  // }
+  
+  
+  if (input_tree == NULL){
+    ROS_ERROR("OCTOMAP NOT SET!");
+    return false;
+  }
 
   for(OcTree::leaf_iterator it = input_tree->begin_leafs(),
         end=input_tree->end_leafs(); it!= end; ++it)
@@ -337,6 +377,12 @@ bool get_keys(viper::GetKeys::Request  &req,
           // ONLY ADD IF KEY IS NOT IN ALREADY
           if(std::find(res.keys.begin(), res.keys.end(), hash) == res.keys.end()) {
             /* res.keys does not contain hash */
+	    
+	    geometry_msgs::Pose pose;
+	    pose.position.x = x;
+	    pose.position.y = y;
+	    pose.position.z = z;
+	    res.posearray.poses.push_back(pose);
             res.keys.push_back(hash);
             res.values.push_back(node_value);
           } 
@@ -358,24 +404,28 @@ bool view_eval(viper::ViewValue::Request  &req,
   ROS_INFO("Received service request: view_eval (%f %f %f)", req.pose.position.x, req.pose.position.y, req.pose.position.z);
   geometry_msgs::Pose camera_pose = req.pose; 
 
-  //OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
-  /* NOTE: USE IT WHEN ON ROBOT, BUT NOT FOR BATCH EVALUATION */
-  AbstractOcTree* tree = octomap_msgs::fullMsgToMap(req.octomap);
-  if (!tree){
-    ROS_ERROR("Failed to recreate octomap");
+  // //OcTree* octree = octomap_msgs::binaryMsgToMap(req.octomap);
+  // /* NOTE: USE IT WHEN ON ROBOT, BUT NOT FOR BATCH EVALUATION */
+  // AbstractOcTree* tree = octomap_msgs::fullMsgToMap(req.octomap);
+  // if (!tree){
+  //   ROS_ERROR("Failed to recreate octomap");
+  //   return false;
+  // }
+
+  // OcTree* octree = dynamic_cast<OcTree*>(tree);
+  
+  // if (octree){
+  //   ROS_INFO("Map received (%zu nodes, %f m res)", octree->size(), octree->getResolution());
+  //   input_tree = extract_supporting_planes(octree);
+  // } else{
+  //   ROS_ERROR("No map received!");
+  //   input_tree = NULL;
+  // }
+  
+  if (input_tree == NULL){
+    ROS_ERROR("OCTOMAP NOT SET!");
     return false;
   }
-
-  OcTree* octree = dynamic_cast<OcTree*>(tree);
-  
-  if (octree){
-    ROS_INFO("Map received (%zu nodes, %f m res)", octree->size(), octree->getResolution());
-    input_tree = extract_supporting_planes(octree);
-  } else{
-    ROS_ERROR("No map received!");
-    input_tree = NULL;
-  }
-  
   
   // Generate frustum.
   Frustum f = generate_frustum(camera_pose);
@@ -410,9 +460,14 @@ int main (int argc, char** argv)
   ros::ServiceServer get_keys_service = node.advertiseService("get_keys", get_keys);
   ROS_INFO("Started octomap get-keys service");
 
+    ros::ServiceServer set_octomap_service = node.advertiseService("set_octomap", set_octomap);
+  ROS_INFO("Started set-octomap service");
+
+
   ros::spin();
   ROS_INFO("Stopped view evaluation service");
   ROS_INFO("Stopped octomap get-keys service");
+  ROS_INFO("Stopped set-octomap service");
   return 0;
 }
 

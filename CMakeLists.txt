@@ -65,6 +65,7 @@ add_service_files(
    PTU_FK.srv
    ViewValue.srv
    GetKeys.srv
+   SetOctomap.srv
 )
 
 ## Generate actions in the 'action' folder

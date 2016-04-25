@@ -81,7 +81,7 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
 
     def setup(self):
         
-        self.inflation_radius = float(rospy.get_param('inflation_radius', '0.0'))
+        self.inflation_radius = float(rospy.get_param('inflation_radius', '0.4'))
 
         #points = rospy.get_param('roi', '[]')
 
@@ -96,9 +96,9 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
         self.roi = polygon
         
         self.views_at_pose = int(rospy.get_param('views_at_pose', '8'))
-        self.min_pan = float(rospy.get_param('min_pan', '-2.09'))
-        self.max_pan = float(rospy.get_param('max_pan', '2.09'))
-        self.min_tilt = float(rospy.get_param('min_tilt', '-0.22')) # self.min_tilt = float(rospy.get_param('min_tilt', '-0.22'))
+        self.min_pan = float(rospy.get_param('min_pan', '-1.57'))
+        self.max_pan = float(rospy.get_param('max_pan', '1.57'))
+        self.min_tilt = float(rospy.get_param('min_tilt', '0.0')) # self.min_tilt = float(rospy.get_param('min_tilt', '-0.22'))
         self.max_tilt = float(rospy.get_param('max_tilt', '0.52')) 
         self.velocity = float(rospy.get_param('velocity', '1.0'))
         rospy.loginfo("Wait for nav_goals")
@@ -124,6 +124,7 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
                 return
             for j in range(len(resp.goals.poses)):
                 for i in range(0,self.views_at_pose):
+                    rospy.loginfo('pose: %s ptu: %s', str(j), str(i))
                     pose = resp.goals.poses[j]
                     pan = random.uniform(self.min_pan, self.max_pan)
                     tilt = random.uniform(self.min_tilt, self.max_tilt)
@@ -343,7 +344,7 @@ class ScitosViewEvaluator(viper.core.robot.ViewEvaluator):
             self.view_eval = rospy.ServiceProxy('view_eval', ViewValue)
         except rospy.ServiceException, e:
             rospy.logerr("Service call failed: %s" % e)
-    
+
     def evaluate(self, view, octomap):
         if self.first_call:
             self.setup()
@@ -352,7 +353,7 @@ class ScitosViewEvaluator(viper.core.robot.ViewEvaluator):
 
         req = ViewValueRequest()
         req.pose = view.get_ptu_pose()
-        req.octomap = octomap
+        #req.octomap = octomap
         try:
             resp = self.view_eval(req)
             view.set_keys(resp.keys)
