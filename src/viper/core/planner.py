@@ -78,7 +78,9 @@ class ViewPlanner(object):
         while coverage < min_coverage and num_of_views < max_num_of_views:
             
             v = self._robot.generate()
-            
+            if v == None:
+                return []
+                
             keys_covered = 0
             value = self._robot.evaluate(v, None) #octomap)
             for k in v.get_keys():
