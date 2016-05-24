@@ -18,6 +18,9 @@ class Robot(object):
 
     def generate(self):
         return self._view_generator.generate()
+
+    def generate_views_from_view_infos(self, vinfos):
+        return self._view_generator.generate_views_from_view_infos(vinfos)
     
     def cost(self, view1, view2):
         return self._view_transition_model.cost(view1, view2)

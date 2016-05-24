@@ -114,6 +114,36 @@ class ScitosViewGenerator(viper.core.robot.ViewGenerator):
             rospy.logerr("Service call failed: %s" % e)
         self.views = []
 
+    def generate_views_from_view_infos(self, vinfos):
+        if self.first_call:
+            self.setup()
+            self.first_call = False
+
+        views = []
+        for vinfo in vinfos:
+            v = self.generate_view_from_view_info(vinfo)
+            views.append(v)
+        return views
+            
+
+    def generate_view_from_view_info(self, vinfo):
+        rospy.loginfo('Generate view from ViewInfo')
+        try:
+            pose = vinfo.robot_pose
+            jointstate = vinfo.ptu_state
+
+            pan = jointstate.position[jointstate.name.index('pan')]
+            tilt = jointstate.position[jointstate.name.index('tilt')]
+            
+            resp_ptu_pose = self.ptu_fk(pan,tilt,pose)
+
+            view = ScitosView(self.next_id(), pose, jointstate, resp_ptu_pose.pose)
+                
+        except rospy.ServiceException, e:
+            rospy.logerr("Service call failed: %s" % e)
+            return None
+        return view
+        
     def generate_views(self):        
         rospy.loginfo('Generate views (%s views at pose)' % self.views_at_pose)
         try:
