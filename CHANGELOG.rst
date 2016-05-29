@@ -2,8 +2,8 @@
 Changelog for package viper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2016-05-29)
+------------------
 * Initial y3 version for release.
 * Contributors: Lars Kunze
 

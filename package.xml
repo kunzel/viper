@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>viper</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>View Planning Environment for Robots (VIPER)</description>
 
   <maintainer email="l.kunze@cs.bham.ac.uk">Lars Kunze</maintainer>
