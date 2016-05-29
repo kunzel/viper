@@ -2,8 +2,8 @@
 Changelog for package viper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2016-05-29)
+------------------
 * Install updates
 * Contributors: Nick Hawes
 
