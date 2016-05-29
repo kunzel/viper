@@ -38,13 +38,11 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>tf_conversions</build_depend>
-  <build_depend>moveit</build_depend>
   <build_depend>octomap_msgs</build_depend>
   <build_depend>moveit_ros_planning_interface</build_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>roscpp</run_depend>
-  <run_depend>moveit</run_depend>
   <run_depend>moveit_ros_planning_interface</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
