@@ -1,0 +1,13 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package viper
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+* Initial y3 version for release.
+* Contributors: Lars Kunze
+
+0.0.1 (2014-06-27)
+------------------
+* initial commit
+* Contributors: Lars Kunze
