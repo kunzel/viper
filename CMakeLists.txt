@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   octomap_msgs
   cmake_modules
+  nav_msgs
+  moveit_core
 )
 
 find_package(octomap 1.6 REQUIRED)
