@@ -2,8 +2,8 @@
 Changelog for package viper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.3 (2016-05-30)
+------------------
 * Updated install/cmake/packaging
 * Contributors: Nick Hawes
 
