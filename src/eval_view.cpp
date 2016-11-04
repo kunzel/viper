@@ -105,7 +105,14 @@ OcTree* retrieve_octree()
       usleep(1000000);
     }
  
-  OcTree* octree = octomap_msgs::binaryMsgToMap(resp.map);
+  AbstractOcTree* tree = octomap_msgs::fullMsgToMap(resp.map);
+  if (!tree){
+    ROS_ERROR("Failed to recreate octomap");
+    return  false;
+  }
+
+  OcTree* octree = dynamic_cast<OcTree*>(tree);
+  //OcTree* octree = octomap_msgs::binaryMsgToMap(resp.map);
 
   if (octree){
     ROS_INFO("Map received (%zu nodes, %f m res)", octree->size(), octree->getResolution());
@@ -310,7 +317,7 @@ bool set_octomap(viper::SetOctomap::Request  &req,
   
   if (octree){
     ROS_INFO("Map received (%zu nodes, %f m res)", octree->size(), octree->getResolution());
-    input_tree = extract_supporting_planes(octree);
+    input_tree = octree; //extract_supporting_planes(octree);
   } else{
     ROS_ERROR("No map received!");
     input_tree = NULL;
