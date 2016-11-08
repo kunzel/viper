@@ -27,9 +27,11 @@ using octomap_msgs::GetOctomap;
 using namespace std;
 using namespace octomap;
 
+// extract supporting planes
 #define Z_MIN 0.5
-
 #define ANGLE_MAX_DIFF (M_PI / 4)  
+
+// frustum definitions
 double frustum_near = 0.8;
 double frustum_far = 2.5;
 double frustum_angle = 40.5;
@@ -454,9 +456,17 @@ int main (int argc, char** argv)
   ros::init (argc, argv, "evaluate_view_and_get_keys");
   ros::NodeHandle node; 
 
-  //node.getParam("frustum_near", frustum_near);
-  //node.getParam("frustum_far", frustum_far);
-  //node.getParam("frustum_angle", frustum_angle);
+  node.getParam("frustum_near", frustum_near);
+  node.getParam("frustum_far", frustum_far);
+  node.getParam("frustum_ratio", frustum_ratio);
+  node.getParam("frustum_angle", frustum_angle);
+
+  ROS_INFO("===== BEGIN FRUSTUM DEFINITION =====");
+  ROS_INFO(" near  : %f", frustum_near);
+  ROS_INFO(" far   : %f", frustum_far);
+  ROS_INFO(" ratio : %f", frustum_ratio);
+  ROS_INFO(" angle : %f", frustum_angle);
+  ROS_INFO("===== END FRUSTUM DEFINITION =====");
 
   // USE ONLY WHEN OCTOMAP IS NOT SEND VIA REQUEST
   //input_tree = retrieve_octree();  
