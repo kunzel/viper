@@ -104,7 +104,7 @@ class ViewPlanner(object):
                 print('-------------------------------------------')
                 print "COVERAGE:", coverage, " #VIEWS:", num_of_views
                 print('-------------------------------------------')
-                num_of_views += 1
+            num_of_views += 1
 
         # give warning if max_number of views was exceeded
         print('===========================================')
